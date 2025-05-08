@@ -3,49 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glória Nacional FC - Protótipo</title>
+    <title>Football Manager Prototype</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <header>
-        <h1>Glória Nacional FC</h1>
+        <h1>Meu Jogo de Futebol</h1>
     </header>
 
     <main id="game-container">
-        <section id="club-selection-screen" class="screen active">
-            <h2>Escolha seu Clube</h2>
-            <div id="club-list">
+        <section id="home-screen" class="game-screen active">
+            <h2>Bem-vindo ao Jogo!</h2>
+            <p>Gerencie seu clube, escolha seu elenco e simule partidas.</p>
+            <button id="start-game-btn">Começar Jogo</button>
+        </section>
+
+        <section id="club-selection-screen" class="game-screen">
+            <h2>Escolha Seu Clube</h2>
+            <div id="club-list-container">
+                <p>Carregando clubes...</p>
+            </div>
+            <div id="selected-club-info">
                 </div>
+            <button id="select-club-btn" disabled>Confirmar Clube</button>
+            <button class="back-button" data-target-screen="home-screen">Voltar</button>
         </section>
 
-        <section id="dashboard-screen" class="screen">
-            <h2 id="club-name-display">Nome do Clube</h2>
-            <p>Reputação: <span id="club-reputation"></span></p>
-            <p>Orçamento: R$ <span id="club-budget">0</span></p>
-            <p>Próximo Jogo: <span id="next-opponent">Adversário Genérico</span></p>
-            <button id="btn-view-squad">Ver Elenco</button>
-            <button id="btn-play-match">Jogar Partida</button>
-            <button id="btn-back-to-club-selection">Escolher Outro Clube</button>
+        <section id="squad-screen" class="game-screen">
+            <h2>Meu Elenco</h2>
+            <h3 id="current-club-name">Nome do Clube</h3>
+            <div id="squad-list-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Posição</th>
+                            <th>Overall</th>
+                            </tr>
+                    </thead>
+                    <tbody id="player-list-body">
+                        <tr>
+                            <td colspan="3">Carregando elenco...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button id="simulate-match-btn">Simular Próxima Partida</button>
+            <button class="back-button" data-target-screen="home-screen">Menu Principal</button>
         </section>
 
-        <section id="squad-screen" class="screen">
-            <h2>Elenco</h2>
-            <div id="player-list">
-                </div>
-            <button id="btn-back-to-dashboard-from-squad">Voltar ao Painel</button>
+        <section id="match-screen" class="game-screen">
+            <h2>Simulando Partida</h2>
+            <div class="match-info">
+                <span id="home-team-display">Time Casa</span> <span id="score-display">0 - 0</span> <span id="away-team-display">Time Fora</span>
+            </div>
+            <div id="match-log">
+                <p>Partida prestes a começar...</p>
+            </div>
+            <button id="start-simulation-btn">Iniciar Simulação</button>
+            <button id="view-result-btn" class="hidden">Ver Resultado</button>
         </section>
 
-        <section id="match-result-screen" class="screen">
+        <section id="result-screen" class="game-screen">
             <h2>Resultado da Partida</h2>
-            <p id="match-result-text"></p>
-            <p id="match-scorers"></p>
-            <p id="match-stats"></p>
-            <button id="btn-back-to-dashboard-from-match">Continuar</button>
+            <div id="final-score">
+                <p>Placar: -</p>
+            </div>
+            <div id="match-summary">
+                <p id="result-message"></p>
+            </div>
+             <div id="match-events-summary">
+                <h3>Eventos:</h3>
+                <ul id="result-events-list">
+                    <li>Nenhum evento registrado.</li>
+                </ul>
+            </div>
+            <button class="back-button" data-target-screen="squad-screen">Voltar para o Elenco</button>
+             <button class="back-button" data-target-screen="home-screen">Voltar para o Menu</button>
         </section>
+
     </main>
 
     <footer>
-        <p>Protótipo Glória Nacional FC - Foco na Funcionalidade</p>
+        <p>&copy; 2023 Meu Jogo Prototype</p>
     </footer>
 
     <script src="script.js"></script>

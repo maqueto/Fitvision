@@ -1,725 +1,453 @@
-// Configurações iniciais
-document.addEventListener('DOMContentLoaded', function() {
-  // Variáveis globais
-  let currentUser = null;
-  let workoutTimer = null;
-  let workoutSeconds = 0;
-  let isWorkoutPaused = true;
-  let currentExerciseIndex = 0;
-  let currentSet = 1;
-  let currentReps = 0;
-  let poseDetector = null;
-  let postureScore = 75;
-  
-  // Dados mockados (em uma aplicação real, viriam de um backend)
-  const mockExercises = [
-    {
-      id: 1,
-      name: "Supino Reto",
-      muscles: ["Peitoral", "Tríceps", "Deltóide"],
-      description: "Deite-se no banco com os pés apoiados no chão. Segure a barra com as mãos um pouco mais afastadas que a largura dos ombros. Desça a barra até o peito, mantendo os cotovelos em um ângulo de 75 graus. Empurre a barra para cima até estender os braços.",
-      sets: 3,
-      reps: 10,
-      tips: [
-        "Mantenha as costas firmes no banco",
-        "Não arquear a lombar excessivamente",
-        "Cotovelos em 75 graus na descida"
-      ],
-      videoUrl: "https://example.com/videos/supino.mp4"
-    },
-    {
-      id: 2,
-      name: "Agachamento Livre",
-      muscles: ["Quadríceps", "Glúteos", "Isquiotibiais"],
-      description: "Fique em pé com os pés na largura dos ombros. Mantenha as costas retas e agache como se fosse sentar em uma cadeira, até que suas coxas fiquem paralelas ao chão. Volte à posição inicial.",
-      sets: 4,
-      reps: 12,
-      tips: [
-        "Mantenha o peito erguido",
-        "Joelhos não devem passar dos pés",
-        "Desça até o paralelo"
-      ],
-      videoUrl: "https://example.com/videos/agachamento.mp4"
-    }
-  ];
+// script.js
 
-  const mockWorkoutPlan = {
-    name: "Superior A - Hipertrofia",
-    duration: 45,
-    calories: 320,
-    exercises: mockExercises
-  };
-
-  const mockProgressData = {
-    weight: [
-      { date: '2023-01-01', value: 80 },
-      { date: '2023-01-08', value: 79.5 },
-      { date: '2023-01-15', value: 79 },
-      { date: '2023-01-22', value: 78.5 },
-      { date: '2023-01-29', value: 78 }
-    ],
-    muscle: [
-      { date: '2023-01-01', value: 40 },
-      { date: '2023-01-08', value: 40.5 },
-      { date: '2023-01-15', value: 41 },
-      { date: '2023-01-22', value: 41.5 },
-      { date: '2023-01-29', value: 42 }
-    ],
-    fat: [
-      { date: '2023-01-01', value: 21 },
-      { date: '2023-01-08', value: 20.5 },
-      { date: '2023-01-15', value: 20 },
-      { date: '2023-01-22', value: 19 },
-      { date: '2023-01-29', value: 18 }
-    ]
-  };
-
-  // Inicialização do aplicativo
-  initApp();
-
-  // Função de inicialização
-  function initApp() {
-    // Simular splash screen por 2 segundos
-    setTimeout(() => {
-      document.getElementById('splash-screen').classList.remove('active');
-      document.getElementById('onboarding-screen').classList.add('active');
-      initOnboarding();
-    }, 2000);
-    
-    // Inicializar gráficos
-    initCharts();
-    
-    // Configurar listeners
-    setupEventListeners();
-  }
-
-  // Inicializar onboarding
-  function initOnboarding() {
-    const slides = document.querySelectorAll('.onboarding-slide');
-    const nextBtn = document.querySelector('.next-btn');
-    const skipBtn = document.querySelector('.skip-btn');
-    const progressSteps = document.querySelectorAll('.progress-step');
-    let currentSlide = 0;
-
-    // Mostrar primeiro slide
-    showSlide(currentSlide);
-
-    function showSlide(index) {
-      slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-      });
-      
-      // Atualizar barra de progresso
-      progressSteps.forEach((step, i) => {
-        step.classList.toggle('active', i <= index);
-      });
-      
-      // Atualizar texto do botão no último slide
-      if (index === slides.length - 1) {
-        nextBtn.textContent = 'Começar';
-      } else {
-        nextBtn.textContent = 'Próximo';
-      }
-    }
-
-    nextBtn.addEventListener('click', () => {
-      if (currentSlide < slides.length - 1) {
-        currentSlide++;
-        showSlide(currentSlide);
-      } else {
-        // Finalizar onboarding
-        document.getElementById('onboarding-screen').classList.remove('active');
-        document.getElementById('signup-screen').classList.add('active');
-      }
-    });
-
-    skipBtn.addEventListener('click', () => {
-      document.getElementById('onboarding-screen').classList.remove('active');
-      document.getElementById('signup-screen').classList.add('active');
-    });
-  }
-
-  // Configurar listeners de eventos
-  function setupEventListeners() {
-    // Formulário de cadastro
-    document.getElementById('user-data-form').addEventListener('submit', handleSignup);
-    
-    // Navegação inferior
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.getAttribute('data-target');
-        navigateTo(target);
-      });
-    });
-    
-    // Botão de voltar
-    document.querySelector('.btn-back').addEventListener('click', () => {
-      document.getElementById('workout-screen').classList.remove('active');
-      document.getElementById('main-app').classList.add('active');
-      resetWorkoutTimer();
-    });
-    
-    // Controles de treino
-    document.getElementById('play-pause-btn').addEventListener('click', toggleWorkoutPlayPause);
-    document.getElementById('prev-exercise').addEventListener('click', prevExercise);
-    document.getElementById('next-exercise').addEventListener('click', nextExercise);
-    document.getElementById('finish-set-btn').addEventListener('click', finishSet);
-    document.querySelector('.plus-rep').addEventListener('click', () => updateReps(1));
-    document.querySelector('.minus-rep').addEventListener('click', () => updateReps(-1));
-    
-    // Botão iniciar treino
-    document.querySelector('.start-workout-btn').addEventListener('click', startWorkout);
-    
-    // Modal de configurações
-    document.querySelector('.modal-close').addEventListener('click', closeModal);
-    document.querySelectorAll('.toggle-switch').forEach(toggle => {
-      toggle.addEventListener('click', function() {
-        this.classList.toggle('active');
-      });
-    });
-    
-    // Toggles de unidade
-    document.querySelectorAll('.unit-switch span').forEach(span => {
-      span.addEventListener('click', function() {
-        this.parentNode.querySelectorAll('span').forEach(s => s.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
-  }
-
-  // Manipular cadastro do usuário
-  function handleSignup(e) {
-    e.preventDefault();
-    
-    const formData = {
-      name: document.getElementById('user-name').value,
-      age: document.getElementById('user-age').value,
-      gender: document.getElementById('user-gender').value,
-      height: document.getElementById('user-height').value,
-      weight: document.getElementById('user-weight').value,
-      goal: document.querySelector('input[name="goal"]:checked').value,
-      level: document.getElementById('user-level').value
-    };
-    
-    // Validar dados (simplificado)
-    if (!formData.name || !formData.age || !formData.height || !formData.weight) {
-      alert('Por favor, preencha todos os campos obrigatórios');
-      return;
-    }
-    
-    // Criar usuário
-    currentUser = {
-      ...formData,
-      bmi: calculateBMI(formData.height, formData.weight),
-      joinDate: new Date().toISOString()
-    };
-    
-    // Atualizar UI com dados do usuário
-    updateUserProfile();
-    
-    // Navegar para tela principal
-    document.getElementById('signup-screen').classList.remove('active');
-    document.getElementById('main-app').classList.add('active');
-  }
-
-  // Calcular IMC
-  function calculateBMI(height, weight) {
-    const heightInMeters = height / 100;
-    return (weight / (heightInMeters * heightInMeters)).toFixed(1);
-  }
-
-  // Atualizar perfil do usuário
-  function updateUserProfile() {
-    if (!currentUser) return;
-    
-    // Tela principal
-    document.getElementById('user-display-name').textContent = currentUser.name;
-    document.getElementById('bmi-value').textContent = currentUser.bmi;
-    
-    // Tela de perfil
-    document.getElementById('profile-name').textContent = currentUser.name;
-    document.getElementById('profile-goal').textContent = `Objetivo: ${getGoalName(currentUser.goal)}`;
-    document.getElementById('profile-weight').textContent = `${currentUser.weight}kg`;
-    
-    // Atualizar métricas baseadas no IMC
-    updateBodyMetrics();
-  }
-
-  // Obter nome do objetivo
-  function getGoalName(goal) {
-    const goals = {
-      hypertrophy: 'Hipertrofia',
-      weightloss: 'Perda de peso',
-      endurance: 'Resistência'
-    };
-    return goals[goal] || goal;
-  }
-
-  // Atualizar métricas corporais
-  function updateBodyMetrics() {
-    if (!currentUser) return;
-    
-    const bmi = parseFloat(currentUser.bmi);
-    let fatPercentage, musclePercentage, waterPercentage;
-    
-    // Cálculos simplificados (em uma aplicação real seriam mais precisos)
-    if (currentUser.gender === 'male') {
-      fatPercentage = (1.20 * bmi) + (0.23 * currentUser.age) - 16.2;
-      musclePercentage = 100 - (fatPercentage + 15); // 15% para ossos, órgãos, etc.
-    } else {
-      fatPercentage = (1.20 * bmi) + (0.23 * currentUser.age) - 5.4;
-      musclePercentage = 100 - (fatPercentage + 20); // 20% para ossos, órgãos, etc.
-    }
-    
-    waterPercentage = currentUser.gender === 'male' ? 60 : 55;
-    
-    // Atualizar UI
-    document.getElementById('fat-value').textContent = `${fatPercentage.toFixed(1)}%`;
-    document.getElementById('muscle-value').textContent = `${musclePercentage.toFixed(1)}%`;
-    document.getElementById('water-value').textContent = `${waterPercentage}%`;
-    
-    // Atualizar perfil
-    document.getElementById('profile-fat').textContent = `${fatPercentage.toFixed(1)}%`;
-    document.getElementById('profile-muscle').textContent = `${musclePercentage.toFixed(1)}%`;
-    document.getElementById('profile-water').textContent = `${waterPercentage}%`;
-  }
-
-  // Navegação entre telas
-  function navigateTo(screenId) {
-    // Esconder todas as telas
-    document.querySelectorAll('.screen').forEach(screen => {
-      screen.classList.remove('active');
-    });
-    
-    // Mostrar tela alvo
-    document.getElementById(screenId).classList.add('active');
-    
-    // Inicializar telas específicas
-    if (screenId === 'posture-screen') {
-      initPostureAnalysis();
-    } else if (screenId === 'profile-screen') {
-      updateProfileStats();
-    }
-  }
-
-  // Inicializar gráficos
-  function initCharts() {
-    // Gráfico de progresso
-    const progressCtx = document.getElementById('progress-chart').getContext('2d');
-    const progressChart = new Chart(progressCtx, {
-      type: 'line',
-      data: {
-        labels: mockProgressData.weight.map(item => item.date.split('-')[2] + '/' + item.date.split('-')[1]),
-        datasets: [
-          {
-            label: 'Peso (kg)',
-            data: mockProgressData.weight.map(item => item.value),
-            borderColor: '#4361ee',
-            backgroundColor: 'rgba(67, 97, 238, 0.1)',
-            tension: 0.3,
-            fill: true
-          },
-          {
-            label: 'Músculo (%)',
-            data: mockProgressData.muscle.map(item => item.value),
-            borderColor: '#4ad66d',
-            backgroundColor: 'rgba(74, 214, 109, 0.1)',
-            tension: 0.3,
-            fill: true
-          },
-          {
-            label: 'Gordura (%)',
-            data: mockProgressData.fat.map(item => item.value),
-            borderColor: '#f72585',
-            backgroundColor: 'rgba(247, 37, 133, 0.1)',
-            tension: 0.3,
-            fill: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
+// --- Dados do Jogo (Mais Complexos) ---
+// Arrays de objetos para clubes e jogadores
+const gameData = {
+    clubs: [
+        {
+            id: 1,
+            name: "Leões Valentes F.C.",
+            power: 75, // Poder geral para simulação simplificada
+            players: [
+                { id: 101, name: "Pedro Goleiro", position: "GK", overall: 78 },
+                { id: 102, name: "João Zagueiro", position: "DEF", overall: 76 },
+                { id: 103, name: "Maria Lateral", position: "DEF", overall: 75 },
+                { id: 104, name: "Carlos Volante", position: "MID", overall: 74 },
+                { id: 105, name: "Ana Meia-Campo", position: "MID", overall: 77 },
+                { id: 106, name: "Lucas Ponta", position: "ATT", overall: 79 },
+                { id: 107, name: "Beatriz Centroavante", position: "ATT", overall: 80 },
+                 { id: 108, name: "Rafa Zagueiro", position: "DEF", overall: 73 },
+                 { id: 109, name: "Bruno Lateral", position: "DEF", overall: 72 },
+                 { id: 110, name: "Fernanda Volante", position: "MID", overall: 75 },
+                 { id: 111, name: "Gustavo Meia", position: "MID", overall: 76 },
+                 { id: 112, name: "Helena Atacante", position: "ATT", overall: 78 },
+            ]
         },
-        scales: {
-          y: {
-            beginAtZero: false
-          }
+        {
+            id: 2,
+            name: "Águias Poderosas S.E.",
+            power: 80,
+             players: [
+                { id: 201, name: "Felipe Goleiro", position: "GK", overall: 82 },
+                { id: 202, name: "Gabriela Zagueira", position: "DEF", overall: 81 },
+                { id: 203, name: "Thiago Lateral", position: "DEF", overall: 80 },
+                { id: 204, name: "Julia Volante", position: "MID", overall: 79 },
+                { id: 205, name: "Leonardo Meia", position: "MID", overall: 83 },
+                { id: 206, name: "Camila Ponta", position: "ATT", overall: 84 },
+                { id: 207, name: "Ricardo Centroavante", position: "ATT", overall: 85 },
+                 { id: 208, name: "Patrícia Zagueira", position: "DEF", overall: 79 },
+                 { id: 209, name: "Daniel Lateral", position: "DEF", overall: 78 },
+                 { id: 210, name: "Manuela Volante", position: "MID", overall: 80 },
+                 { id: 211, name: "Eduardo Meia", position: "MID", overall: 81 },
+                 { id: 212, name: "Isabela Atacante", position: "ATT", overall: 83 },
+            ]
+        },
+         {
+            id: 3,
+            name: "Panteras Negras F.C.",
+            power: 70,
+             players: [
+                { id: 301, name: "Goleiro 301", position: "GK", overall: 70 },
+                { id: 302, name: "Zagueiro 302", position: "DEF", overall: 71 },
+                { id: 303, name: "Lateral 303", position: "DEF", overall: 69 },
+                { id: 304, name: "Volante 304", position: "MID", overall: 70 },
+                { id: 305, name: "Meia 305", position: "MID", overall: 72 },
+                { id: 306, name: "Ponta 306", position: "ATT", overall: 74 },
+                { id: 307, name: "Centroavante 307", position: "ATT", overall: 75 },
+                 { id: 308, name: "Zagueiro 308", position: "DEF", overall: 68 },
+                 { id: 309, name: "Lateral 309", position: "DEF", overall: 67 },
+                 { id: 310, name: "Volante 310", position: "MID", overall: 69 },
+                 { id: 311, name: "Meia 311", position: "MID", overall: 70 },
+                 { id: 312, name: "Atacante 312", position: "ATT", overall: 73 },
+            ]
         }
-      }
+        // Adicione mais clubes aqui
+    ],
+    // Podemos adicionar mais dados globais aqui no futuro (ligas, etc.)
+};
+
+
+// --- Elementos da UI (Mantidos do código anterior) ---
+// ... (tudo que estava na seção Elementos da UI antes) ...
+// Seções da UI
+const gameContainer = document.getElementById('game-container');
+const screens = document.querySelectorAll('.game-screen');
+
+// Tela Inicial
+const homeScreen = document.getElementById('home-screen');
+const startButton = document.getElementById('start-game-btn');
+
+// Tela de Seleção de Clube
+const clubSelectionScreen = document.getElementById('club-selection-screen');
+const clubListContainer = document.getElementById('club-list-container');
+const selectClubButton = document.getElementById('select-club-btn');
+
+// Tela do Elenco
+const squadScreen = document.getElementById('squad-screen');
+const currentClubNameDisplay = document.getElementById('current-club-name');
+const playerListBody = document.getElementById('player-list-body');
+const simulateMatchButton = document.getElementById('simulate-match-btn');
+
+// Tela de Simulação da Partida
+const matchScreen = document.getElementById('match-screen');
+const homeTeamDisplay = document.getElementById('home-team-display');
+const awayTeamDisplay = document.getElementById('away-team-display');
+const scoreDisplay = document.getElementById('score-display');
+const matchLog = document.getElementById('match-log');
+const startSimulationButton = document.getElementById('start-simulation-btn');
+const viewResultButton = document.getElementById('view-result-btn');
+
+// Tela de Resultado da Partida
+const resultScreen = document.getElementById('result-screen');
+const finalScoreDisplay = document.getElementById('final-score');
+const resultMessageDisplay = document.getElementById('result-message');
+const resultEventsList = document.getElementById('result-events-list');
+
+
+const backButtons = document.querySelectorAll('.back-button');
+
+
+// --- Estado do Jogo (Mais Complexo) ---
+let selectedClub = null; // Objeto do clube selecionado pelo jogador
+let selectedClubElement = null; // Referência ao botão do clube selecionado na tela de seleção
+let currentOpponent = null; // Objeto do clube adversário na partida
+let matchResult = { // Objeto para guardar os resultados da partida atual
+    homeScore: 0,
+    awayScore: 0,
+    events: [] // Array de strings ou objetos para os eventos (ex: gols)
+};
+
+
+// --- Funções de Navegação (Mantidas do código anterior) ---
+function showScreen(screenId) {
+    screens.forEach(screen => {
+        screen.classList.remove('active');
     });
-    
-    // Gráfico do corpo (perfil)
-    const bodyCtx = document.getElementById('body-chart').getContext('2d');
-    const bodyChart = new Chart(bodyCtx, {
-      type: 'radar',
-      data: {
-        labels: ['Força', 'Resistência', 'Flexibilidade', 'Equilíbrio', 'Agilidade', 'Coordenação'],
-        datasets: [{
-          label: 'Seu Desempenho',
-          data: [85, 70, 60, 75, 65, 80],
-          backgroundColor: 'rgba(67, 97, 238, 0.2)',
-          borderColor: '#4361ee',
-          pointBackgroundColor: '#4361ee',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: '#4361ee'
-        }]
-      },
-      options: {
-        scales: {
-          r: {
-            angleLines: {
-              display: true
-            },
-            suggestedMin: 0,
-            suggestedMax: 100
-          }
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+}
+
+// --- Funções de Lógica do Jogo (Implementadas agora) ---
+
+// Carrega e exibe a lista de clubes na tela de seleção
+function loadClubSelection() {
+    clubListContainer.innerHTML = ''; // Limpa a lista atual
+
+    if (gameData.clubs.length === 0) {
+        clubListContainer.innerHTML = '<p>Nenhum clube disponível no momento.</p>';
+        selectClubButton.disabled = true;
+        return;
+    }
+
+    gameData.clubs.forEach(club => {
+        const clubButton = document.createElement('button');
+        clubButton.textContent = club.name;
+        clubButton.dataset.clubId = club.id; // Guarda o ID do clube no botão
+
+        // Adiciona evento de clique para selecionar o clube
+        clubButton.addEventListener('click', () => {
+            // Remove a classe 'selected' do botão anterior (se houver)
+            if (selectedClubElement) {
+                selectedClubElement.classList.remove('selected');
+            }
+
+            // Encontra o objeto clube correspondente nos dados
+            selectedClub = gameData.clubs.find(c => c.id === club.id);
+            selectedClubElement = clubButton; // Guarda a referência do botão clicado
+
+            // Adiciona a classe 'selected' ao botão clicado
+            selectedClubElement.classList.add('selected');
+
+            selectClubButton.disabled = false; // Habilita o botão "Confirmar Clube"
+            console.log(`Clube selecionado: ${selectedClub.name}`);
+
+            // Opcional: mostrar info do clube selecionado na div selected-club-info
+            // document.getElementById('selected-club-info').innerHTML = `<p>Você selecionou: <strong>${selectedClub.name}</strong> (Poder: ${selectedClub.power})</p>`;
+        });
+
+        clubListContainer.appendChild(clubButton); // Adiciona o botão à lista
+    });
+
+    // Desabilitar o botão "Confirmar Clube" até que um clube seja selecionado
+    selectClubButton.disabled = true;
+     if (selectedClubElement) { // Se já havia um clube selecionado antes de voltar
+        selectedClubElement.classList.remove('selected'); // Limpa o estado visual anterior
+        selectedClubElement = null;
+     }
+     selectedClub = null; // Reseta o clube selecionado ao voltar para a tela de seleção
+
+}
+
+// Carrega e exibe o elenco do clube selecionado
+function loadSquad(clubId) {
+    const club = gameData.clubs.find(c => c.id === clubId);
+
+    if (!club) {
+        console.error(`Clube com ID ${clubId} não encontrado!`);
+        currentClubNameDisplay.textContent = "Erro ao carregar clube";
+        playerListBody.innerHTML = '<tr><td colspan="3">Erro ao carregar elenco.</td></tr>';
+        return;
+    }
+
+    selectedClub = club; // Garante que selectedClub está atualizado (útil se voltarmos para esta tela)
+    currentClubNameDisplay.textContent = selectedClub.name; // Exibe o nome do clube
+    playerListBody.innerHTML = ''; // Limpa a lista atual
+
+    if (!selectedClub.players || selectedClub.players.length === 0) {
+         playerListBody.innerHTML = '<tr><td colspan="3">Elenco não disponível.</td></tr>';
+         simulateMatchButton.disabled = true; // Não pode simular sem jogadores
+         return;
+    }
+
+    // Ordena jogadores (ex: por Overall, posição, nome) - Opcional
+    const sortedPlayers = [...selectedClub.players].sort((a, b) => b.overall - a.overall);
+
+
+    sortedPlayers.forEach(player => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${player.name}</td>
+            <td>${player.position}</td>
+            <td>${player.overall}</td>
+            `;
+        playerListBody.appendChild(row); // Adiciona a linha à tabela
+    });
+
+    simulateMatchButton.disabled = false; // Habilita o botão de simular
+}
+
+// Configura a próxima partida (escolhe adversário, etc.)
+function setupMatch() {
+    if (!selectedClub) {
+        console.error("Nenhum clube selecionado para configurar a partida!");
+        // Poderia redirecionar de volta para a seleção de clube
+        return;
+    }
+
+    // Escolhe um adversário aleatório diferente do clube do jogador
+    const availableOpponents = gameData.clubs.filter(club => club.id !== selectedClub.id);
+
+    if (availableOpponents.length === 0) {
+        console.warn("Não há adversários disponíveis!");
+        // Poderia desabilitar o botão de simular ou mostrar uma mensagem
+        homeTeamDisplay.textContent = selectedClub.name;
+        awayTeamDisplay.textContent = "Sem Adversário";
+        scoreDisplay.textContent = '-';
+        matchLog.innerHTML = '<p>Não há adversários para simular.</p>';
+        startSimulationButton.classList.add('hidden');
+        viewResultButton.classList.add('hidden');
+         simulateMatchButton.disabled = true; // Desabilita simulação na tela de elenco
+        return;
+    }
+
+    const randomOpponentIndex = Math.floor(Math.random() * availableOpponents.length);
+    currentOpponent = availableOpponents[randomOpponentIndex];
+
+    // Exibe os nomes dos times na tela de partida
+    homeTeamDisplay.textContent = selectedClub.name;
+    awayTeamDisplay.textContent = currentOpponent.name;
+    scoreDisplay.textContent = '0 - 0'; // Reseta placar visual
+    matchLog.innerHTML = '<p>Partida prestes a começar...</p>'; // Limpa log
+    startSimulationButton.classList.remove('hidden'); // Garante botão de iniciar visível
+    viewResultButton.classList.add('hidden'); // Garante botão de ver resultado escondido
+
+    console.log(`Partida configurada: ${selectedClub.name} vs ${currentOpponent.name}`);
+}
+
+// Simula a partida (lógica simplificada)
+function simulateMatch() {
+    if (!selectedClub || !currentOpponent) {
+        console.error("Times não configurados para simulação!");
+         matchLog.innerHTML = '<p>Erro na configuração da partida.</p>';
+        return;
+    }
+
+    console.log(`Simulando: ${selectedClub.name} (${selectedClub.power}) vs ${currentOpponent.name} (${currentOpponent.power})`);
+
+    matchResult = { homeScore: 0, awayScore: 0, events: [] }; // Reseta o resultado
+    matchLog.innerHTML = ''; // Limpa o log para a nova simulação
+
+    // Lógica de simulação básica:
+    // A chance de um evento de gol ocorrer é influenciada pelo poder do time.
+    // Iteramos por "minutos" ou "eventos" e, em cada passo, verificamos se um gol ocorre.
+    const totalMinutes = 90;
+    const eventsPerMinute = 0.1; // Média de eventos por minuto (para simulação)
+
+    // Calcular chance base de gol por 'tick' de simulação
+    const baseChance = 0.005; // Pequena chance base
+    const chanceFactor = 0.001; // Quão GERAL influencia o poder
+
+
+    // Função para simular um tick
+    function simulateTick(minute) {
+        // Chance de gol para o time da casa (jogador)
+        const homeGoalChance = baseChance + (selectedClub.power * chanceFactor) + (Math.random() * 0.01); // Add randomness
+        if (Math.random() < homeGoalChance) {
+            matchResult.homeScore++;
+             const scorer = selectedClub.players[Math.floor(Math.random() * selectedClub.players.length)]; // Escolhe um jogador aleatório
+             const event = `Gol do ${selectedClub.name}! (${scorer.name}) aos ${minute}'`;
+            matchResult.events.push(event);
+            matchLog.innerHTML += `<p>${event}</p>`; // Atualiza o log
+            scoreDisplay.textContent = `${matchResult.homeScore} - ${matchResult.awayScore}`;
         }
-      }
-    });
-  }
 
-  // Iniciar treino
-  function startWorkout() {
-    document.getElementById('main-app').classList.remove('active');
-    document.getElementById('workout-screen').classList.add('active');
-    
-    // Carregar primeiro exercício
-    loadExercise(currentExerciseIndex);
-    
-    // Iniciar temporizador
-    startWorkoutTimer();
-    
-    // Iniciar detecção de postura
-    initPoseDetection();
-  }
-
-  // Carregar exercício
-  function loadExercise(index) {
-    if (index < 0 || index >= mockWorkoutPlan.exercises.length) return;
-    
-    const exercise = mockWorkoutPlan.exercises[index];
-    
-    // Atualizar UI
-    document.getElementById('current-exercise-name').textContent = exercise.name;
-    document.getElementById('exercise-description').textContent = exercise.description;
-    document.getElementById('current-set').textContent = currentSet;
-    document.getElementById('current-reps').textContent = currentReps;
-    
-    // Atualizar dicas de postura
-    const tipsList = document.getElementById('posture-tips-list');
-    tipsList.innerHTML = '';
-    exercise.tips.forEach(tip => {
-      const li = document.createElement('li');
-      li.textContent = tip;
-      tipsList.appendChild(li);
-    });
-    
-    // Atualizar contador de repetições
-    document.getElementById('rep-display').textContent = currentReps;
-  }
-
-  // Controle do temporizador de treino
-  function startWorkoutTimer() {
-    resetWorkoutTimer();
-    isWorkoutPaused = false;
-    workoutTimer = setInterval(updateWorkoutTimer, 1000);
-    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause"></i>';
-  }
-
-  function pauseWorkoutTimer() {
-    isWorkoutPaused = true;
-    clearInterval(workoutTimer);
-    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
-  }
-
-  function resetWorkoutTimer() {
-    workoutSeconds = 0;
-    updateWorkoutTimerDisplay();
-  }
-
-  function updateWorkoutTimer() {
-    if (!isWorkoutPaused) {
-      workoutSeconds++;
-      updateWorkoutTimerDisplay();
-    }
-  }
-
-  function updateWorkoutTimerDisplay() {
-    const minutes = Math.floor(workoutSeconds / 60);
-    const seconds = workoutSeconds % 60;
-    document.getElementById('workout-time').textContent = 
-      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  // Alternar play/pause
-  function toggleWorkoutPlayPause() {
-    if (isWorkoutPaused) {
-      startWorkoutTimer();
-    } else {
-      pauseWorkoutTimer();
-    }
-  }
-
-  // Navegação entre exercícios
-  function prevExercise() {
-    if (currentExerciseIndex > 0) {
-      currentExerciseIndex--;
-      currentSet = 1;
-      currentReps = 0;
-      loadExercise(currentExerciseIndex);
-    }
-  }
-
-  function nextExercise() {
-    if (currentExerciseIndex < mockWorkoutPlan.exercises.length - 1) {
-      currentExerciseIndex++;
-      currentSet = 1;
-      currentReps = 0;
-      loadExercise(currentExerciseIndex);
-    } else {
-      // Fim do treino
-      finishWorkout();
-    }
-  }
-
-  // Atualizar contador de repetições
-  function updateReps(change) {
-    currentReps = Math.max(0, currentReps + change);
-    document.getElementById('current-reps').textContent = currentReps;
-    document.getElementById('rep-display').textContent = currentReps;
-  }
-
-  // Finalizar série
-  function finishSet() {
-    const exercise = mockWorkoutPlan.exercises[currentExerciseIndex];
-    
-    if (currentSet < exercise.sets) {
-      currentSet++;
-      currentReps = 0;
-      loadExercise(currentExerciseIndex);
-      
-      // Feedback visual
-      const btn = document.getElementById('finish-set-btn');
-      btn.textContent = 'Série concluída!';
-      btn.style.backgroundColor = '#4ad66d';
-      
-      setTimeout(() => {
-        btn.textContent = 'Finalizar Série';
-        btn.style.backgroundColor = '';
-      }, 1500);
-    } else {
-      nextExercise();
-    }
-  }
-
-  // Finalizar treino
-  function finishWorkout() {
-    pauseWorkoutTimer();
-    
-    // Mostrar resumo do treino
-    alert(`Treino concluído!\nDuração: ${Math.floor(workoutSeconds / 60)} minutos\nExercícios completados: ${mockWorkoutPlan.exercises.length}`);
-    
-    // Voltar para tela principal
-    document.getElementById('workout-screen').classList.remove('active');
-    document.getElementById('main-app').classList.add('active');
-    
-    // Resetar variáveis
-    currentExerciseIndex = 0;
-    currentSet = 1;
-    currentReps = 0;
-  }
-
-  // Inicializar detecção de postura
-  async function initPoseDetection() {
-    try {
-      // Carregar modelo de detecção de pose
-      await tf.ready();
-      const model = poseDetection.SupportedModels.MoveNet;
-      const detectorConfig = {
-        modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
-        enableSmoothing: true
-      };
-      
-      poseDetector = await poseDetection.createDetector(model, detectorConfig);
-      
-      // Configurar câmera
-      const video = document.getElementById('pose-video');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      video.onloadedmetadata = () => {
-        video.play();
-        detectPose();
-      };
-    } catch (error) {
-      console.error('Erro ao inicializar detecção de pose:', error);
-    }
-  }
-
-  // Detectar pose em tempo real
-  async function detectPose() {
-    if (!poseDetector) return;
-    
-    const video = document.getElementById('pose-video');
-    const canvas = document.getElementById('pose-canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Configurar canvas
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Detectar poses
-    const poses = await poseDetector.estimatePoses(video);
-    
-    // Limpar canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Desenhar esqueleto (simplificado)
-    if (poses.length > 0) {
-      const keypoints = poses[0].keypoints;
-      
-      // Desenhar pontos
-      keypoints.forEach(keypoint => {
-        if (keypoint.score > 0.3) {
-          ctx.beginPath();
-          ctx.arc(keypoint.x, keypoint.y, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = '#4361ee';
-          ctx.fill();
+        // Chance de gol para o time de fora (adversário)
+        const awayGoalChance = baseChance + (currentOpponent.power * chanceFactor) + (Math.random() * 0.01); // Add randomness
+        if (Math.random() < awayGoalChance) {
+            matchResult.awayScore++;
+            const scorer = currentOpponent.players[Math.floor(Math.random() * currentOpponent.players.length)]; // Escolhe um jogador aleatório
+            const event = `Gol do ${currentOpponent.name}! (${scorer.name}) aos ${minute}'`;
+            matchResult.events.push(event);
+            matchLog.innerHTML += `<p>${event}</p>`; // Atualiza o log
+            scoreDisplay.textContent = `${matchResult.homeScore} - ${matchResult.awayScore}`;
         }
-      });
-      
-      // Simular análise de postura (em uma aplicação real seria mais complexo)
-      simulatePostureAnalysis();
-    }
-    
-    // Continuar detecção
-    requestAnimationFrame(detectPose);
-  }
 
-  // Simular análise de postura
-  function simulatePostureAnalysis() {
-    // Alternar aleatoriamente entre feedback bom e ruim para demonstração
-    const isGoodPosture = Math.random() > 0.5;
-    
-    const alertElement = document.getElementById('posture-alert');
-    const goodElement = document.getElementById('posture-good');
-    
-    if (isGoodPosture) {
-      alertElement.classList.add('hidden');
-      goodElement.classList.remove('hidden');
+        // Scroll para o final do log automaticamente
+        matchLog.scrollTop = matchLog.scrollHeight;
+    }
+
+    // Simula minuto a minuto
+    let currentMinute = 0;
+    const simulationInterval = setInterval(() => {
+        currentMinute++;
+        // Adiciona um evento de minuto no log a cada ~10 minutos simulados para feedback visual
+        if (currentMinute % 10 === 0 || currentMinute === 1) {
+             matchLog.innerHTML += `<p>-- ${currentMinute}' minutos --</p>`;
+             matchLog.scrollTop = matchLog.scrollHeight;
+        }
+
+
+        simulateTick(currentMinute);
+
+        if (currentMinute >= totalMinutes) {
+            clearInterval(simulationInterval); // Para a simulação após 90 minutos
+            console.log("Simulação concluída.");
+            matchLog.innerHTML += '<p>-- Fim de jogo --</p>';
+             matchLog.scrollTop = matchLog.scrollHeight;
+
+
+            // Atualiza botões após a simulação
+            startSimulationButton.classList.add('hidden');
+            viewResultButton.classList.remove('hidden');
+        }
+    }, 50); // Intervalo de tempo entre cada minuto simulado (em ms)
+
+}
+
+
+// Exibe o resultado da partida na tela de resultado
+function displayResult() {
+     if (!matchResult || !selectedClub || !currentOpponent) {
+         console.error("Dados de resultado ou times não disponíveis!");
+          finalScoreDisplay.textContent = 'Placar: -';
+          resultMessageDisplay.textContent = 'Erro ao carregar resultado.';
+          resultEventsList.innerHTML = '<li>Erro ao carregar eventos.</li>';
+         return;
+     }
+
+    finalScoreDisplay.textContent = `Placar Final: ${matchResult.homeScore} - ${matchResult.awayScore}`;
+
+    // Determina a mensagem do resultado
+    if (matchResult.homeScore > matchResult.awayScore) {
+        resultMessageDisplay.textContent = `🎉 Vitória do ${selectedClub.name}! 🎉`;
+    } else if (matchResult.homeScore < matchResult.awayScore) {
+        resultMessageDisplay.textContent = `😢 Derrota para o ${selectedClub.name}. Vitória do ${currentOpponent.name}.`;
     } else {
-      goodElement.classList.add('hidden');
-      alertElement.classList.remove('hidden');
+        resultMessageDisplay.textContent = "🤝 Empate!";
     }
-  }
 
-  // Inicializar análise de postura
-  async function initPostureAnalysis() {
-    try {
-      // Configurar câmera
-      const video = document.getElementById('posture-video');
-      const canvas = document.getElementById('posture-canvas');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      
-      video.onloadedmetadata = () => {
-        video.play();
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Iniciar simulação de análise
-        simulatePostureScore();
-      };
-    } catch (error) {
-      console.error('Erro ao acessar câmera:', error);
-    }
-  }
-
-  // Simular pontuação de postura
-  function simulatePostureScore() {
-    // Variar a pontuação aleatoriamente para demonstração
-    postureScore = Math.max(50, Math.min(95, postureScore + (Math.random() * 10 - 5)));
-    
-    // Atualizar UI
-    document.querySelector('.score-value').textContent = `${Math.round(postureScore)}%`;
-    document.querySelector('.circle-fill').setAttribute('stroke-dasharray', `${postureScore}, 100`);
-    
-    // Atualizar lista de problemas
-    const issuesList = document.getElementById('posture-issues-list');
-    issuesList.innerHTML = '';
-    
-    if (postureScore < 70) {
-      const issues = [
-        "Ombro esquerdo mais alto que o direito",
-        "Leve inclinação para frente",
-        "Pescoço projetado para frente",
-        "Desalinhamento pélvico"
-      ];
-      
-      // Selecionar 1-3 problemas aleatórios
-      const randomIssues = issues
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 1 + Math.floor(Math.random() * 2));
-      
-      randomIssues.forEach(issue => {
-        const li = document.createElement('li');
-        li.innerHTML = `<i class="fas fa-exclamation-triangle"></i><span>${issue}</span>`;
-        issuesList.appendChild(li);
-      });
+    // Lista os eventos (gols)
+    resultEventsList.innerHTML = ''; // Limpa a lista atual
+    if (matchResult.events.length > 0) {
+        matchResult.events.forEach(event => {
+            const listItem = document.createElement('li');
+            listItem.textContent = event;
+            resultEventsList.appendChild(listItem);
+        });
     } else {
-      const li = document.createElement('li');
-      li.textContent = "Nenhum problema significativo detectado";
-      issuesList.appendChild(li);
+        resultEventsList.innerHTML = '<li>Nenhum gol marcado na partida.</li>';
     }
-    
-    // Continuar simulação
-    setTimeout(simulatePostureScore, 3000);
-  }
+}
 
-  // Atualizar estatísticas do perfil
-  function updateProfileStats() {
-    if (!currentUser) return;
-    
-    // Dados mockados
-    document.getElementById('active-days').textContent = `${Math.floor(Math.random() * 30)}/30`;
-    document.getElementById('total-calories').textContent = `${Math.floor(Math.random() * 10000).toLocaleString()} kcal`;
-    document.getElementById('total-workouts').textContent = Math.floor(Math.random() * 50);
-    document.getElementById('total-achievements').textContent = Math.floor(Math.random() * 10);
-  }
 
-  // Controle de modais
-  function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-  }
+// --- Event Listeners (Atualizados e Expandidos) ---
 
-  function closeModal() {
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.classList.remove('active');
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Botão "Começar Jogo" na tela inicial
+    startButton.addEventListener('click', () => {
+        showScreen('club-selection-screen');
+        loadClubSelection(); // Agora esta função preenche a lista de clubes e adiciona listeners
     });
-  }
 
-  // Funções auxiliares
-  function getCurrentGreeting() {
-    const hour = new Date().getHours();
-    
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  }
+    // Botões "Voltar" (Mantidos do código anterior, com pequenas melhorias)
+     backButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetScreenId = button.dataset.targetScreen;
+            showScreen(targetScreenId);
 
-  // Atualizar saudação
-  setInterval(() => {
-    if (document.getElementById('greeting-text')) {
-      document.getElementById('greeting-text').textContent = `${getCurrentGreeting()},`;
-    }
-  }, 60000);
+            // Lógica específica ao voltar para certas telas
+            if (targetScreenId === 'club-selection-screen') {
+                 // Reseta a seleção de clube ao voltar para esta tela
+                 selectedClub = null;
+                 if (selectedClubElement) {
+                     selectedClubElement.classList.remove('selected');
+                     selectedClubElement = null;
+                 }
+                 selectClubButton.disabled = true; // Desabilita o botão confirmar
+                 // Opcional: recarregar a lista de clubes se ela puder mudar
+                 // loadClubSelection();
+            } else if (targetScreenId === 'squad-screen') {
+                 // Ao voltar para o elenco após uma partida ou configuração
+                 currentOpponent = null; // Reseta o adversário configurado
+                 matchResult = { homeScore: 0, awayScore: 0, events: [] }; // Reseta o resultado da partida
+                 // Limpa o estado visual da tela de partida
+                 matchLog.innerHTML = '<p>Partida prestes a começar...</p>';
+                 scoreDisplay.textContent = '0 - 0';
+                 startSimulationButton.classList.remove('hidden');
+                 viewResultButton.classList.add('hidden');
+            }
+        });
+    });
+
+
+    // Botão "Confirmar Clube" (Atualizado para usar o clube selecionado)
+     selectClubButton.addEventListener('click', () => {
+         if (selectedClub) { // Verifica se selectedClub foi preenchido pelo clique no botão do clube
+             showScreen('squad-screen');
+             loadSquad(selectedClub.id); // Passa o ID do clube selecionado para carregar o elenco
+         } else {
+             console.warn("Nenhum clube selecionado para confirmar!");
+             // Poderia mostrar uma mensagem visual ao usuário
+         }
+     });
+
+     // Botão "Simular Próxima Partida" (Na tela do elenco)
+     simulateMatchButton.addEventListener('click', () => {
+         showScreen('match-screen');
+         setupMatch(); // Configura a partida (escolhe adversário)
+         // A simulação agora é iniciada pelo botão "Iniciar Simulação" na tela de partida
+     });
+
+     // Botão "Iniciar Simulação" (Dentro da tela de partida)
+     startSimulationButton.addEventListener('click', () => {
+         simulateMatch(); // Executa a lógica de simulação
+          // Os botões serão atualizados DENTRO da função simulateMatch() quando a simulação terminar
+     });
+
+     // Botão "Ver Resultado" (Aparece após a simulação)
+     viewResultButton.addEventListener('click', () => {
+         showScreen('result-screen');
+         displayResult(); // Exibe os dados armazenados no matchResult
+     });
+
+
+    // --- Inicialização ---
+    // Mostra a tela inicial ao carregar
+     showScreen('home-screen');
+
+     // Prepara a tela de seleção de clube logo no início, mas ela só será visível quando o botão start for clicado
+     // loadClubSelection(); // Poderia carregar aqui, mas é melhor carregar quando o botão start é clicado
 });

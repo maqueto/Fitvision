@@ -1,453 +1,596 @@
-// script.js
+// Constantes do jogo
+const TEAM_FORMATIONS = {
+    '4-4-2': { defenders: 4, midfielders: 4, forwards: 2 },
+    '4-3-3': { defenders: 4, midfielders: 3, forwards: 3 },
+    '3-5-2': { defenders: 3, midfielders: 5, forwards: 2 },
+    '4-2-3-1': { defenders: 4, midfielders: 5, forwards: 1 }
+};
 
-// --- Dados do Jogo (Mais Complexos) ---
-// Arrays de objetos para clubes e jogadores
-const gameData = {
-    clubs: [
+const EVENT_TYPES = {
+    GOAL: { text: 'Gol!', class: 'goal' },
+    YELLOW_CARD: { text: 'Cartão amarelo', class: 'yellow-card' },
+    RED_CARD: { text: 'Cartão vermelho!', class: 'red-card' },
+    INJURY: { text: 'Lesão!', class: 'injury' },
+    SUBSTITUTION: { text: 'Substituição', class: 'substitution' }
+};
+
+// Dados do jogo
+let gameData = {
+    clubs: [],
+    selectedClub: null,
+    currentOpponent: null,
+    matchEvents: [],
+    simulationSpeed: 1,
+    isSimulationPaused: false
+};
+
+// Elementos DOM
+const domElements = {
+    screens: {
+        mainMenu: document.getElementById('main-menu'),
+        clubSelection: document.getElementById('club-selection'),
+        squadView: document.getElementById('squad-view'),
+        matchSimulation: document.getElementById('match-simulation'),
+        matchResult: document.getElementById('match-result'),
+        howToPlay: document.getElementById('how-to-play-screen'),
+        credits: document.getElementById('credits-screen')
+    },
+    buttons: {
+        startGame: document.getElementById('start-game'),
+        howToPlay: document.getElementById('how-to-play'),
+        credits: document.getElementById('credits'),
+        confirmClub: document.getElementById('confirm-club'),
+        backToMenuFromClub: document.getElementById('back-to-menu-from-club'),
+        simulateMatch: document.getElementById('simulate-match'),
+        backToClubSelection: document.getElementById('back-to-club-selection'),
+        training: document.getElementById('training'),
+        pauseMatch: document.getElementById('pause-match'),
+        speedUpMatch: document.getElementById('speed-up-match'),
+        backToSquad: document.getElementById('back-to-squad'),
+        newMatch: document.getElementById('new-match'),
+        backToMenuFromHelp: document.getElementById('back-to-menu-from-help'),
+        backToMenuFromCredits: document.getElementById('back-to-menu-from-credits')
+    },
+    clubSelection: {
+        clubList: document.getElementById('club-list-container'),
+        selectedClubPreview: document.getElementById('selected-club-preview')
+    },
+    squadView: {
+        clubName: document.getElementById('current-club-name'),
+        clubPower: document.getElementById('club-power'),
+        clubBudget: document.getElementById('club-budget'),
+        playerList: document.getElementById('player-list').querySelector('tbody')
+    },
+    matchSimulation: {
+        homeTeamName: document.getElementById('home-team-name'),
+        awayTeamName: document.getElementById('away-team-name'),
+        homeTeamLogo: document.getElementById('home-team-logo'),
+        awayTeamLogo: document.getElementById('away-team-logo'),
+        homeScore: document.getElementById('home-score'),
+        awayScore: document.getElementById('away-score'),
+        currentMinute: document.getElementById('current-minute'),
+        timeProgress: document.getElementById('time-progress'),
+        eventsList: document.getElementById('events-list'),
+        shotsStatHome: document.getElementById('shots-stat-home'),
+        shotsStatAway: document.getElementById('shots-stat-away'),
+        possessionStatHome: document.getElementById('possession-stat-home'),
+        possessionStatAway: document.getElementById('possession-stat-away'),
+        foulsStatHome: document.getElementById('fouls-stat-home'),
+        foulsStatAway: document.getElementById('fouls-stat-away')
+    },
+    matchResult: {
+        resultHomeName: document.getElementById('result-home-name'),
+        resultAwayName: document.getElementById('result-away-name'),
+        resultHomeLogo: document.getElementById('result-home-logo'),
+        resultAwayLogo: document.getElementById('result-away-logo'),
+        resultHomeScore: document.getElementById('result-home-score'),
+        resultAwayScore: document.getElementById('result-away-score'),
+        resultMessage: document.getElementById('result-message'),
+        highlightEvents: document.getElementById('highlight-events'),
+        topPlayers: document.getElementById('top-players').querySelector('tbody')
+    }
+};
+
+// Inicialização do jogo
+function initGame() {
+    generateSampleData();
+    setupEventListeners();
+    showScreen('main-menu');
+}
+
+// Gerar dados de exemplo
+function generateSampleData() {
+    gameData.clubs = [
         {
             id: 1,
-            name: "Leões Valentes F.C.",
-            power: 75, // Poder geral para simulação simplificada
-            players: [
-                { id: 101, name: "Pedro Goleiro", position: "GK", overall: 78 },
-                { id: 102, name: "João Zagueiro", position: "DEF", overall: 76 },
-                { id: 103, name: "Maria Lateral", position: "DEF", overall: 75 },
-                { id: 104, name: "Carlos Volante", position: "MID", overall: 74 },
-                { id: 105, name: "Ana Meia-Campo", position: "MID", overall: 77 },
-                { id: 106, name: "Lucas Ponta", position: "ATT", overall: 79 },
-                { id: 107, name: "Beatriz Centroavante", position: "ATT", overall: 80 },
-                 { id: 108, name: "Rafa Zagueiro", position: "DEF", overall: 73 },
-                 { id: 109, name: "Bruno Lateral", position: "DEF", overall: 72 },
-                 { id: 110, name: "Fernanda Volante", position: "MID", overall: 75 },
-                 { id: 111, name: "Gustavo Meia", position: "MID", overall: 76 },
-                 { id: 112, name: "Helena Atacante", position: "ATT", overall: 78 },
-            ]
+            name: 'Real Madrid',
+            power: 92,
+            budget: 500,
+            formation: '4-3-3',
+            players: generatePlayers(25, 85, 94)
         },
         {
             id: 2,
-            name: "Águias Poderosas S.E.",
-            power: 80,
-             players: [
-                { id: 201, name: "Felipe Goleiro", position: "GK", overall: 82 },
-                { id: 202, name: "Gabriela Zagueira", position: "DEF", overall: 81 },
-                { id: 203, name: "Thiago Lateral", position: "DEF", overall: 80 },
-                { id: 204, name: "Julia Volante", position: "MID", overall: 79 },
-                { id: 205, name: "Leonardo Meia", position: "MID", overall: 83 },
-                { id: 206, name: "Camila Ponta", position: "ATT", overall: 84 },
-                { id: 207, name: "Ricardo Centroavante", position: "ATT", overall: 85 },
-                 { id: 208, name: "Patrícia Zagueira", position: "DEF", overall: 79 },
-                 { id: 209, name: "Daniel Lateral", position: "DEF", overall: 78 },
-                 { id: 210, name: "Manuela Volante", position: "MID", overall: 80 },
-                 { id: 211, name: "Eduardo Meia", position: "MID", overall: 81 },
-                 { id: 212, name: "Isabela Atacante", position: "ATT", overall: 83 },
-            ]
+            name: 'Barcelona',
+            power: 90,
+            budget: 450,
+            formation: '4-3-3',
+            players: generatePlayers(25, 84, 92)
         },
-         {
+        {
             id: 3,
-            name: "Panteras Negras F.C.",
-            power: 70,
-             players: [
-                { id: 301, name: "Goleiro 301", position: "GK", overall: 70 },
-                { id: 302, name: "Zagueiro 302", position: "DEF", overall: 71 },
-                { id: 303, name: "Lateral 303", position: "DEF", overall: 69 },
-                { id: 304, name: "Volante 304", position: "MID", overall: 70 },
-                { id: 305, name: "Meia 305", position: "MID", overall: 72 },
-                { id: 306, name: "Ponta 306", position: "ATT", overall: 74 },
-                { id: 307, name: "Centroavante 307", position: "ATT", overall: 75 },
-                 { id: 308, name: "Zagueiro 308", position: "DEF", overall: 68 },
-                 { id: 309, name: "Lateral 309", position: "DEF", overall: 67 },
-                 { id: 310, name: "Volante 310", position: "MID", overall: 69 },
-                 { id: 311, name: "Meia 311", position: "MID", overall: 70 },
-                 { id: 312, name: "Atacante 312", position: "ATT", overall: 73 },
-            ]
+            name: 'Manchester City',
+            power: 91,
+            budget: 600,
+            formation: '4-2-3-1',
+            players: generatePlayers(25, 84, 93)
+        },
+        {
+            id: 4,
+            name: 'Liverpool',
+            power: 89,
+            budget: 400,
+            formation: '4-3-3',
+            players: generatePlayers(25, 83, 91)
+        },
+        {
+            id: 5,
+            name: 'Bayern Munich',
+            power: 90,
+            budget: 350,
+            formation: '4-2-3-1',
+            players: generatePlayers(25, 84, 92)
+        },
+        {
+            id: 6,
+            name: 'PSG',
+            power: 88,
+            budget: 700,
+            formation: '4-3-3',
+            players: generatePlayers(25, 82, 90)
+        },
+        {
+            id: 7,
+            name: 'Juventus',
+            power: 86,
+            budget: 300,
+            formation: '3-5-2',
+            players: generatePlayers(25, 80, 88)
+        },
+        {
+            id: 8,
+            name: 'Ajax',
+            power: 82,
+            budget: 150,
+            formation: '4-3-3',
+            players: generatePlayers(25, 75, 85)
         }
-        // Adicione mais clubes aqui
-    ],
-    // Podemos adicionar mais dados globais aqui no futuro (ligas, etc.)
-};
-
-
-// --- Elementos da UI (Mantidos do código anterior) ---
-// ... (tudo que estava na seção Elementos da UI antes) ...
-// Seções da UI
-const gameContainer = document.getElementById('game-container');
-const screens = document.querySelectorAll('.game-screen');
-
-// Tela Inicial
-const homeScreen = document.getElementById('home-screen');
-const startButton = document.getElementById('start-game-btn');
-
-// Tela de Seleção de Clube
-const clubSelectionScreen = document.getElementById('club-selection-screen');
-const clubListContainer = document.getElementById('club-list-container');
-const selectClubButton = document.getElementById('select-club-btn');
-
-// Tela do Elenco
-const squadScreen = document.getElementById('squad-screen');
-const currentClubNameDisplay = document.getElementById('current-club-name');
-const playerListBody = document.getElementById('player-list-body');
-const simulateMatchButton = document.getElementById('simulate-match-btn');
-
-// Tela de Simulação da Partida
-const matchScreen = document.getElementById('match-screen');
-const homeTeamDisplay = document.getElementById('home-team-display');
-const awayTeamDisplay = document.getElementById('away-team-display');
-const scoreDisplay = document.getElementById('score-display');
-const matchLog = document.getElementById('match-log');
-const startSimulationButton = document.getElementById('start-simulation-btn');
-const viewResultButton = document.getElementById('view-result-btn');
-
-// Tela de Resultado da Partida
-const resultScreen = document.getElementById('result-screen');
-const finalScoreDisplay = document.getElementById('final-score');
-const resultMessageDisplay = document.getElementById('result-message');
-const resultEventsList = document.getElementById('result-events-list');
-
-
-const backButtons = document.querySelectorAll('.back-button');
-
-
-// --- Estado do Jogo (Mais Complexo) ---
-let selectedClub = null; // Objeto do clube selecionado pelo jogador
-let selectedClubElement = null; // Referência ao botão do clube selecionado na tela de seleção
-let currentOpponent = null; // Objeto do clube adversário na partida
-let matchResult = { // Objeto para guardar os resultados da partida atual
-    homeScore: 0,
-    awayScore: 0,
-    events: [] // Array de strings ou objetos para os eventos (ex: gols)
-};
-
-
-// --- Funções de Navegação (Mantidas do código anterior) ---
-function showScreen(screenId) {
-    screens.forEach(screen => {
-        screen.classList.remove('active');
-    });
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-    }
+    ];
 }
 
-// --- Funções de Lógica do Jogo (Implementadas agora) ---
-
-// Carrega e exibe a lista de clubes na tela de seleção
-function loadClubSelection() {
-    clubListContainer.innerHTML = ''; // Limpa a lista atual
-
-    if (gameData.clubs.length === 0) {
-        clubListContainer.innerHTML = '<p>Nenhum clube disponível no momento.</p>';
-        selectClubButton.disabled = true;
-        return;
-    }
-
-    gameData.clubs.forEach(club => {
-        const clubButton = document.createElement('button');
-        clubButton.textContent = club.name;
-        clubButton.dataset.clubId = club.id; // Guarda o ID do clube no botão
-
-        // Adiciona evento de clique para selecionar o clube
-        clubButton.addEventListener('click', () => {
-            // Remove a classe 'selected' do botão anterior (se houver)
-            if (selectedClubElement) {
-                selectedClubElement.classList.remove('selected');
-            }
-
-            // Encontra o objeto clube correspondente nos dados
-            selectedClub = gameData.clubs.find(c => c.id === club.id);
-            selectedClubElement = clubButton; // Guarda a referência do botão clicado
-
-            // Adiciona a classe 'selected' ao botão clicado
-            selectedClubElement.classList.add('selected');
-
-            selectClubButton.disabled = false; // Habilita o botão "Confirmar Clube"
-            console.log(`Clube selecionado: ${selectedClub.name}`);
-
-            // Opcional: mostrar info do clube selecionado na div selected-club-info
-            // document.getElementById('selected-club-info').innerHTML = `<p>Você selecionou: <strong>${selectedClub.name}</strong> (Poder: ${selectedClub.power})</p>`;
+// Gerar jogadores fictícios
+function generatePlayers(count, minOverall, maxOverall) {
+    const positions = ['GK', 'DEF', 'MID', 'ATT'];
+    const firstNames = ['Lionel', 'Cristiano', 'Neymar', 'Kylian', 'Kevin', 'Robert', 'Mohamed', 'Sergio', 'Luka', 'Karim', 'Toni', 'Gareth', 'Eden', 'Paul', 'Antoine', 'Virgil', 'Sadio', 'Alisson', 'Ederson', 'Thibaut'];
+    const lastNames = ['Messi', 'Ronaldo', 'Jr', 'Mbappé', 'De Bruyne', 'Lewandowski', 'Salah', 'Agüero', 'Modrić', 'Benzema', 'Kroos', 'Bale', 'Hazard', 'Pogba', 'Griezmann', 'van Dijk', 'Mané', 'Becker', 'Moraes', 'Courtois'];
+    
+    const players = [];
+    
+    for (let i = 0; i < count; i++) {
+        const position = positions[Math.floor(Math.random() * positions.length)];
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const overall = Math.floor(Math.random() * (maxOverall - minOverall + 1)) + minOverall;
+        const age = Math.floor(Math.random() * 10) + 18;
+        
+        players.push({
+            id: i + 1,
+            name: `${firstName} ${lastName}`,
+            position: position,
+            overall: overall,
+            age: age,
+            fitness: 100,
+            form: Math.floor(Math.random() * 10) + 1
         });
-
-        clubListContainer.appendChild(clubButton); // Adiciona o botão à lista
-    });
-
-    // Desabilitar o botão "Confirmar Clube" até que um clube seja selecionado
-    selectClubButton.disabled = true;
-     if (selectedClubElement) { // Se já havia um clube selecionado antes de voltar
-        selectedClubElement.classList.remove('selected'); // Limpa o estado visual anterior
-        selectedClubElement = null;
-     }
-     selectedClub = null; // Reseta o clube selecionado ao voltar para a tela de seleção
-
+    }
+    
+    // Garantir pelo menos 2 goleiros
+    players[0].position = 'GK';
+    players[1].position = 'GK';
+    
+    return players;
 }
 
-// Carrega e exibe o elenco do clube selecionado
-function loadSquad(clubId) {
-    const club = gameData.clubs.find(c => c.id === clubId);
+// Configurar listeners de eventos
+function setupEventListeners() {
+    // Navegação entre telas
+    domElements.buttons.startGame.addEventListener('click', () => showScreen('club-selection'));
+    domElements.buttons.howToPlay.addEventListener('click', () => showScreen('how-to-play'));
+    domElements.buttons.credits.addEventListener('click', () => showScreen('credits'));
+    domElements.buttons.backToMenuFromClub.addEventListener('click', () => showScreen('main-menu'));
+    domElements.buttons.backToMenuFromHelp.addEventListener('click', () => showScreen('main-menu'));
+    domElements.buttons.backToMenuFromCredits.addEventListener('click', () => showScreen('main-menu'));
+    domElements.buttons.backToClubSelection.addEventListener('click', () => showScreen('club-selection'));
+    domElements.buttons.backToSquad.addEventListener('click', () => showScreen('squad-view'));
+    
+    // Seleção de clube
+    domElements.buttons.confirmClub.addEventListener('click', confirmClubSelection);
+    
+    // Simulação de partida
+    domElements.buttons.simulateMatch.addEventListener('click', startMatchSimulation);
+    domElements.buttons.pauseMatch.addEventListener('click', togglePauseSimulation);
+    domElements.buttons.speedUpMatch.addEventListener('click', changeSimulationSpeed);
+    domElements.buttons.newMatch.addEventListener('click', startMatchSimulation);
+}
 
-    if (!club) {
-        console.error(`Clube com ID ${clubId} não encontrado!`);
-        currentClubNameDisplay.textContent = "Erro ao carregar clube";
-        playerListBody.innerHTML = '<tr><td colspan="3">Erro ao carregar elenco.</td></tr>';
-        return;
+// Mostrar tela específica
+function showScreen(screenName) {
+    // Esconder todas as telas
+    for (const screen in domElements.screens) {
+        domElements.screens[screen].classList.remove('active');
     }
-
-    selectedClub = club; // Garante que selectedClub está atualizado (útil se voltarmos para esta tela)
-    currentClubNameDisplay.textContent = selectedClub.name; // Exibe o nome do clube
-    playerListBody.innerHTML = ''; // Limpa a lista atual
-
-    if (!selectedClub.players || selectedClub.players.length === 0) {
-         playerListBody.innerHTML = '<tr><td colspan="3">Elenco não disponível.</td></tr>';
-         simulateMatchButton.disabled = true; // Não pode simular sem jogadores
-         return;
+    
+    // Mostrar tela solicitada
+    domElements.screens[screenName].classList.add('active');
+    
+    // Carregar dados específicos da tela
+    switch (screenName) {
+        case 'club-selection':
+            loadClubSelectionScreen();
+            break;
+        case 'squad-view':
+            loadSquadViewScreen();
+            break;
     }
+}
 
-    // Ordena jogadores (ex: por Overall, posição, nome) - Opcional
-    const sortedPlayers = [...selectedClub.players].sort((a, b) => b.overall - a.overall);
+// Carregar tela de seleção de clube
+function loadClubSelectionScreen() {
+    domElements.clubSelection.clubList.innerHTML = '';
+    domElements.buttons.confirmClub.disabled = true;
+    gameData.selectedClub = null;
+    
+    gameData.clubs.forEach(club => {
+        const clubElement = document.createElement('div');
+        clubElement.className = 'club-item';
+        clubElement.innerHTML = `
+            <div class="club-logo">${club.name.charAt(0)}</div>
+            <div class="club-name">${club.name}</div>
+            <div class="club-power">Poder: ${club.power}</div>
+        `;
+        
+        clubElement.addEventListener('click', () => selectClub(club));
+        domElements.clubSelection.clubList.appendChild(clubElement);
+    });
+}
 
+// Selecionar clube
+function selectClub(club) {
+    // Remover seleção anterior
+    const previouslySelected = document.querySelector('.club-item.selected');
+    if (previouslySelected) {
+        previouslySelected.classList.remove('selected');
+    }
+    
+    // Adicionar seleção nova
+    const clubElements = document.querySelectorAll('.club-item');
+    clubElements.forEach(element => {
+        if (element.querySelector('.club-name').textContent === club.name) {
+            element.classList.add('selected');
+        }
+    });
+    
+    // Atualizar preview
+    domElements.clubSelection.selectedClubPreview.innerHTML = `
+        <h3>${club.name}</h3>
+        <p>Poder: ${club.power}</p>
+        <p>Orçamento: €${club.budget}M</p>
+        <p>Formação: ${club.formation}</p>
+    `;
+    
+    gameData.selectedClub = club;
+    domElements.buttons.confirmClub.disabled = false;
+}
 
-    sortedPlayers.forEach(player => {
+// Confirmar seleção de clube
+function confirmClubSelection() {
+    if (gameData.selectedClub) {
+        showScreen('squad-view');
+    }
+}
+
+// Carregar tela de visualização do elenco
+function loadSquadViewScreen() {
+    if (!gameData.selectedClub) return;
+    
+    const club = gameData.selectedClub;
+    
+    // Atualizar informações do clube
+    domElements.squadView.clubName.textContent = club.name;
+    domElements.squadView.clubPower.textContent = club.power;
+    domElements.squadView.clubBudget.textContent = `€${club.budget}M`;
+    
+    // Carregar lista de jogadores
+    domElements.squadView.playerList.innerHTML = '';
+    club.players.forEach(player => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${player.name}</td>
             <td>${player.position}</td>
             <td>${player.overall}</td>
-            `;
-        playerListBody.appendChild(row); // Adiciona a linha à tabela
+            <td>${player.age}</td>
+        `;
+        domElements.squadView.playerList.appendChild(row);
     });
-
-    simulateMatchButton.disabled = false; // Habilita o botão de simular
+    
+    // Atualizar formação tática
+    document.getElementById('formation-type').textContent = club.formation;
 }
 
-// Configura a próxima partida (escolhe adversário, etc.)
-function setupMatch() {
-    if (!selectedClub) {
-        console.error("Nenhum clube selecionado para configurar a partida!");
-        // Poderia redirecionar de volta para a seleção de clube
-        return;
-    }
-
-    // Escolhe um adversário aleatório diferente do clube do jogador
-    const availableOpponents = gameData.clubs.filter(club => club.id !== selectedClub.id);
-
-    if (availableOpponents.length === 0) {
-        console.warn("Não há adversários disponíveis!");
-        // Poderia desabilitar o botão de simular ou mostrar uma mensagem
-        homeTeamDisplay.textContent = selectedClub.name;
-        awayTeamDisplay.textContent = "Sem Adversário";
-        scoreDisplay.textContent = '-';
-        matchLog.innerHTML = '<p>Não há adversários para simular.</p>';
-        startSimulationButton.classList.add('hidden');
-        viewResultButton.classList.add('hidden');
-         simulateMatchButton.disabled = true; // Desabilita simulação na tela de elenco
-        return;
-    }
-
-    const randomOpponentIndex = Math.floor(Math.random() * availableOpponents.length);
-    currentOpponent = availableOpponents[randomOpponentIndex];
-
-    // Exibe os nomes dos times na tela de partida
-    homeTeamDisplay.textContent = selectedClub.name;
-    awayTeamDisplay.textContent = currentOpponent.name;
-    scoreDisplay.textContent = '0 - 0'; // Reseta placar visual
-    matchLog.innerHTML = '<p>Partida prestes a começar...</p>'; // Limpa log
-    startSimulationButton.classList.remove('hidden'); // Garante botão de iniciar visível
-    viewResultButton.classList.add('hidden'); // Garante botão de ver resultado escondido
-
-    console.log(`Partida configurada: ${selectedClub.name} vs ${currentOpponent.name}`);
+// Iniciar simulação de partida
+function startMatchSimulation() {
+    if (!gameData.selectedClub) return;
+    
+    // Selecionar adversário aleatório (excluindo o próprio time)
+    let availableOpponents = gameData.clubs.filter(club => club.id !== gameData.selectedClub.id);
+    gameData.currentOpponent = availableOpponents[Math.floor(Math.random() * availableOpponents.length)];
+    
+    // Resetar dados da partida
+    gameData.matchEvents = [];
+    gameData.simulationSpeed = 1;
+    gameData.isSimulationPaused = false;
+    
+    // Configurar tela de simulação
+    domElements.matchSimulation.homeTeamName.textContent = gameData.selectedClub.name;
+    domElements.matchSimulation.awayTeamName.textContent = gameData.currentOpponent.name;
+    domElements.matchSimulation.homeTeamLogo.textContent = gameData.selectedClub.name.charAt(0);
+    domElements.matchSimulation.awayTeamLogo.textContent = gameData.currentOpponent.name.charAt(0);
+    domElements.matchSimulation.homeScore.textContent = '0';
+    domElements.matchSimulation.awayScore.textContent = '0';
+    domElements.matchSimulation.currentMinute.textContent = "0'";
+    domElements.matchSimulation.timeProgress.style.width = '0%';
+    domElements.matchSimulation.eventsList.innerHTML = '';
+    
+    // Resetar estatísticas
+    domElements.matchSimulation.shotsStatHome.style.width = '0%';
+    domElements.matchSimulation.shotsStatAway.style.width = '0%';
+    domElements.matchSimulation.possessionStatHome.style.width = '50%';
+    domElements.matchSimulation.possessionStatAway.style.width = '50%';
+    domElements.matchSimulation.foulsStatHome.style.width = '0%';
+    domElements.matchSimulation.foulsStatAway.style.width = '0%';
+    
+    // Mostrar tela de simulação
+    showScreen('match-simulation');
+    
+    // Iniciar simulação
+    simulateMatch();
 }
 
-// Simula a partida (lógica simplificada)
+// Simular partida
 function simulateMatch() {
-    if (!selectedClub || !currentOpponent) {
-        console.error("Times não configurados para simulação!");
-         matchLog.innerHTML = '<p>Erro na configuração da partida.</p>';
-        return;
-    }
-
-    console.log(`Simulando: ${selectedClub.name} (${selectedClub.power}) vs ${currentOpponent.name} (${currentOpponent.power})`);
-
-    matchResult = { homeScore: 0, awayScore: 0, events: [] }; // Reseta o resultado
-    matchLog.innerHTML = ''; // Limpa o log para a nova simulação
-
-    // Lógica de simulação básica:
-    // A chance de um evento de gol ocorrer é influenciada pelo poder do time.
-    // Iteramos por "minutos" ou "eventos" e, em cada passo, verificamos se um gol ocorre.
-    const totalMinutes = 90;
-    const eventsPerMinute = 0.1; // Média de eventos por minuto (para simulação)
-
-    // Calcular chance base de gol por 'tick' de simulação
-    const baseChance = 0.005; // Pequena chance base
-    const chanceFactor = 0.001; // Quão GERAL influencia o poder
-
-
-    // Função para simular um tick
-    function simulateTick(minute) {
-        // Chance de gol para o time da casa (jogador)
-        const homeGoalChance = baseChance + (selectedClub.power * chanceFactor) + (Math.random() * 0.01); // Add randomness
-        if (Math.random() < homeGoalChance) {
-            matchResult.homeScore++;
-             const scorer = selectedClub.players[Math.floor(Math.random() * selectedClub.players.length)]; // Escolhe um jogador aleatório
-             const event = `Gol do ${selectedClub.name}! (${scorer.name}) aos ${minute}'`;
-            matchResult.events.push(event);
-            matchLog.innerHTML += `<p>${event}</p>`; // Atualiza o log
-            scoreDisplay.textContent = `${matchResult.homeScore} - ${matchResult.awayScore}`;
-        }
-
-        // Chance de gol para o time de fora (adversário)
-        const awayGoalChance = baseChance + (currentOpponent.power * chanceFactor) + (Math.random() * 0.01); // Add randomness
-        if (Math.random() < awayGoalChance) {
-            matchResult.awayScore++;
-            const scorer = currentOpponent.players[Math.floor(Math.random() * currentOpponent.players.length)]; // Escolhe um jogador aleatório
-            const event = `Gol do ${currentOpponent.name}! (${scorer.name}) aos ${minute}'`;
-            matchResult.events.push(event);
-            matchLog.innerHTML += `<p>${event}</p>`; // Atualiza o log
-            scoreDisplay.textContent = `${matchResult.homeScore} - ${matchResult.awayScore}`;
-        }
-
-        // Scroll para o final do log automaticamente
-        matchLog.scrollTop = matchLog.scrollHeight;
-    }
-
-    // Simula minuto a minuto
-    let currentMinute = 0;
+    let minute = 0;
+    const matchDuration = 90;
+    const homeTeamPower = gameData.selectedClub.power;
+    const awayTeamPower = gameData.currentOpponent.power;
+    
+    // Estatísticas da partida
+    const matchStats = {
+        homeShots: 0,
+        awayShots: 0,
+        homePossession: 50,
+        awayPossession: 50,
+        homeFouls: 0,
+        awayFouls: 0,
+        homeGoals: 0,
+        awayGoals: 0
+    };
+    
     const simulationInterval = setInterval(() => {
-        currentMinute++;
-        // Adiciona um evento de minuto no log a cada ~10 minutos simulados para feedback visual
-        if (currentMinute % 10 === 0 || currentMinute === 1) {
-             matchLog.innerHTML += `<p>-- ${currentMinute}' minutos --</p>`;
-             matchLog.scrollTop = matchLog.scrollHeight;
+        if (gameData.isSimulationPaused) return;
+        
+        minute++;
+        domElements.matchSimulation.currentMinute.textContent = `${minute}'`;
+        domElements.matchSimulation.timeProgress.style.width = `${(minute / matchDuration) * 100}%`;
+        
+        // Atualizar estatísticas
+        updateMatchStats(matchStats, homeTeamPower, awayTeamPower);
+        
+        // Gerar eventos aleatórios
+        if (Math.random() < 0.3) {
+            generateMatchEvent(minute, matchStats, homeTeamPower, awayTeamPower);
         }
-
-
-        simulateTick(currentMinute);
-
-        if (currentMinute >= totalMinutes) {
-            clearInterval(simulationInterval); // Para a simulação após 90 minutos
-            console.log("Simulação concluída.");
-            matchLog.innerHTML += '<p>-- Fim de jogo --</p>';
-             matchLog.scrollTop = matchLog.scrollHeight;
-
-
-            // Atualiza botões após a simulação
-            startSimulationButton.classList.add('hidden');
-            viewResultButton.classList.remove('hidden');
+        
+        // Final da partida
+        if (minute >= matchDuration) {
+            clearInterval(simulationInterval);
+            setTimeout(() => showMatchResult(matchStats), 2000);
         }
-    }, 50); // Intervalo de tempo entre cada minuto simulado (em ms)
-
+    }, 1000 / gameData.simulationSpeed);
 }
 
-
-// Exibe o resultado da partida na tela de resultado
-function displayResult() {
-     if (!matchResult || !selectedClub || !currentOpponent) {
-         console.error("Dados de resultado ou times não disponíveis!");
-          finalScoreDisplay.textContent = 'Placar: -';
-          resultMessageDisplay.textContent = 'Erro ao carregar resultado.';
-          resultEventsList.innerHTML = '<li>Erro ao carregar eventos.</li>';
-         return;
-     }
-
-    finalScoreDisplay.textContent = `Placar Final: ${matchResult.homeScore} - ${matchResult.awayScore}`;
-
-    // Determina a mensagem do resultado
-    if (matchResult.homeScore > matchResult.awayScore) {
-        resultMessageDisplay.textContent = `🎉 Vitória do ${selectedClub.name}! 🎉`;
-    } else if (matchResult.homeScore < matchResult.awayScore) {
-        resultMessageDisplay.textContent = `😢 Derrota para o ${selectedClub.name}. Vitória do ${currentOpponent.name}.`;
-    } else {
-        resultMessageDisplay.textContent = "🤝 Empate!";
+// Atualizar estatísticas da partida
+function updateMatchStats(stats, homePower, awayPower) {
+    // Finalizações
+    const homeShotChance = 0.02 * (homePower / 90);
+    const awayShotChance = 0.02 * (awayPower / 90);
+    
+    if (Math.random() < homeShotChance) {
+        stats.homeShots++;
     }
-
-    // Lista os eventos (gols)
-    resultEventsList.innerHTML = ''; // Limpa a lista atual
-    if (matchResult.events.length > 0) {
-        matchResult.events.forEach(event => {
-            const listItem = document.createElement('li');
-            listItem.textContent = event;
-            resultEventsList.appendChild(listItem);
-        });
-    } else {
-        resultEventsList.innerHTML = '<li>Nenhum gol marcado na partida.</li>';
+    if (Math.random() < awayShotChance) {
+        stats.awayShots++;
     }
+    
+    // Posse de bola (ligeira vantagem para o time mais forte)
+    const possessionChange = (homePower - awayPower) / 1000;
+    stats.homePossession += possessionChange;
+    stats.awayPossession -= possessionChange;
+    
+    // Garantir que a posse fique entre 20% e 80%
+    stats.homePossession = Math.max(20, Math.min(80, stats.homePossession));
+    stats.awayPossession = 100 - stats.homePossession;
+    
+    // Faltas
+    if (Math.random() < 0.03) {
+        stats.homeFouls++;
+    }
+    if (Math.random() < 0.03) {
+        stats.awayFouls++;
+    }
+    
+    // Atualizar UI
+    const totalShots = stats.homeShots + stats.awayShots || 1;
+    const homeShotsPercent = (stats.homeShots / totalShots) * 100;
+    const awayShotsPercent = (stats.awayShots / totalShots) * 100;
+    
+    domElements.matchSimulation.shotsStatHome.style.width = `${homeShotsPercent}%`;
+    domElements.matchSimulation.shotsStatAway.style.width = `${awayShotsPercent}%`;
+    domElements.matchSimulation.possessionStatHome.style.width = `${stats.homePossession}%`;
+    domElements.matchSimulation.possessionStatAway.style.width = `${stats.awayPossession}%`;
+    
+    const totalFouls = stats.homeFouls + stats.awayFouls || 1;
+    const homeFoulsPercent = (stats.homeFouls / totalFouls) * 100;
+    const awayFoulsPercent = (stats.awayFouls / totalFouls) * 100;
+    
+    domElements.matchSimulation.foulsStatHome.style.width = `${homeFoulsPercent}%`;
+    domElements.matchSimulation.foulsStatAway.style.width = `${awayFoulsPercent}%`;
 }
 
-
-// --- Event Listeners (Atualizados e Expandidos) ---
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Botão "Começar Jogo" na tela inicial
-    startButton.addEventListener('click', () => {
-        showScreen('club-selection-screen');
-        loadClubSelection(); // Agora esta função preenche a lista de clubes e adiciona listeners
-    });
-
-    // Botões "Voltar" (Mantidos do código anterior, com pequenas melhorias)
-     backButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetScreenId = button.dataset.targetScreen;
-            showScreen(targetScreenId);
-
-            // Lógica específica ao voltar para certas telas
-            if (targetScreenId === 'club-selection-screen') {
-                 // Reseta a seleção de clube ao voltar para esta tela
-                 selectedClub = null;
-                 if (selectedClubElement) {
-                     selectedClubElement.classList.remove('selected');
-                     selectedClubElement = null;
-                 }
-                 selectClubButton.disabled = true; // Desabilita o botão confirmar
-                 // Opcional: recarregar a lista de clubes se ela puder mudar
-                 // loadClubSelection();
-            } else if (targetScreenId === 'squad-screen') {
-                 // Ao voltar para o elenco após uma partida ou configuração
-                 currentOpponent = null; // Reseta o adversário configurado
-                 matchResult = { homeScore: 0, awayScore: 0, events: [] }; // Reseta o resultado da partida
-                 // Limpa o estado visual da tela de partida
-                 matchLog.innerHTML = '<p>Partida prestes a começar...</p>';
-                 scoreDisplay.textContent = '0 - 0';
-                 startSimulationButton.classList.remove('hidden');
-                 viewResultButton.classList.add('hidden');
+// Gerar evento durante a partida
+function generateMatchEvent(minute, stats, homePower, awayPower) {
+    const eventTypes = Object.keys(EVENT_TYPES);
+    const randomEventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    const isHomeTeam = Math.random() < (homePower / (homePower + awayPower));
+    const teamName = isHomeTeam ? gameData.selectedClub.name : gameData.currentOpponent.name;
+    
+    let eventDescription = '';
+    let isGoal = false;
+    
+    switch (randomEventType) {
+        case 'GOAL':
+            if (Math.random() < 0.3 * (isHomeTeam ? homePower : awayPower) / 90) {
+                eventDescription = `${teamName} marca um gol!`;
+                if (isHomeTeam) {
+                    stats.homeGoals++;
+                    domElements.matchSimulation.homeScore.textContent = stats.homeGoals;
+                } else {
+                    stats.awayGoals++;
+                    domElements.matchSimulation.awayScore.textContent = stats.awayGoals;
+                }
+                isGoal = true;
+            } else {
+                return; // Chance de gol não foi bem sucedida
             }
-        });
+            break;
+        case 'YELLOW_CARD':
+            eventDescription = `Cartão amarelo para ${teamName}`;
+            break;
+        case 'RED_CARD':
+            eventDescription = `Cartão vermelho para ${teamName}!`;
+            break;
+        case 'INJURY':
+            eventDescription = `Jogador de ${teamName} se machuca!`;
+            break;
+        case 'SUBSTITUTION':
+            eventDescription = `${teamName} faz uma substituição`;
+            break;
+    }
+    
+    // Criar elemento de evento
+    const eventElement = document.createElement('div');
+    eventElement.className = `event-item ${EVENT_TYPES[randomEventType].class}`;
+    eventElement.innerHTML = `
+        <span class="event-minute">${minute}'</span>
+        <div class="event-icon">${randomEventType === 'GOAL' ? '⚽' : randomEventType === 'YELLOW_CARD' ? '🟨' : randomEventType === 'RED_CARD' ? '🟥' : '🩹'}</div>
+        <span class="event-text">${eventDescription}</span>
+    `;
+    
+    // Adicionar à lista de eventos
+    domElements.matchSimulation.eventsList.prepend(eventElement);
+    
+    // Adicionar aos eventos do jogo
+    gameData.matchEvents.push({
+        minute: minute,
+        type: randomEventType,
+        team: isHomeTeam ? 'home' : 'away',
+        description: eventDescription,
+        isGoal: isGoal
     });
+}
 
+// Pausar/continuar simulação
+function togglePauseSimulation() {
+    gameData.isSimulationPaused = !gameData.isSimulationPaused;
+    domElements.buttons.pauseMatch.textContent = gameData.isSimulationPaused ? 'Continuar' : 'Pausar';
+}
 
-    // Botão "Confirmar Clube" (Atualizado para usar o clube selecionado)
-     selectClubButton.addEventListener('click', () => {
-         if (selectedClub) { // Verifica se selectedClub foi preenchido pelo clique no botão do clube
-             showScreen('squad-screen');
-             loadSquad(selectedClub.id); // Passa o ID do clube selecionado para carregar o elenco
-         } else {
-             console.warn("Nenhum clube selecionado para confirmar!");
-             // Poderia mostrar uma mensagem visual ao usuário
-         }
-     });
+// Alterar velocidade da simulação
+function changeSimulationSpeed() {
+    gameData.simulationSpeed = gameData.simulationSpeed === 1 ? 3 : 1;
+    domElements.buttons.speedUpMatch.textContent = gameData.simulationSpeed === 1 ? 'Acelerar' : 'Velocidade Normal';
+}
 
-     // Botão "Simular Próxima Partida" (Na tela do elenco)
-     simulateMatchButton.addEventListener('click', () => {
-         showScreen('match-screen');
-         setupMatch(); // Configura a partida (escolhe adversário)
-         // A simulação agora é iniciada pelo botão "Iniciar Simulação" na tela de partida
-     });
+// Mostrar resultado da partida
+function showMatchResult(stats) {
+    // Configurar elementos da tela de resultado
+    domElements.matchResult.resultHomeName.textContent = gameData.selectedClub.name;
+    domElements.matchResult.resultAwayName.textContent = gameData.currentOpponent.name;
+    domElements.matchResult.resultHomeLogo.textContent = gameData.selectedClub.name.charAt(0);
+    domElements.matchResult.resultAwayLogo.textContent = gameData.currentOpponent.name.charAt(0);
+    domElements.matchResult.resultHomeScore.textContent = stats.homeGoals;
+    domElements.matchResult.resultAwayScore.textContent = stats.awayGoals;
+    
+    // Determinar mensagem do resultado
+    if (stats.homeGoals > stats.awayGoals) {
+        domElements.matchResult.resultMessage.textContent = 'Vitória!';
+        domElements.matchResult.resultMessage.style.color = '#27ae60';
+    } else if (stats.homeGoals < stats.awayGoals) {
+        domElements.matchResult.resultMessage.textContent = 'Derrota';
+        domElements.matchResult.resultMessage.style.color = '#e74c3c';
+    } else {
+        domElements.matchResult.resultMessage.textContent = 'Empate';
+        domElements.matchResult.resultMessage.style.color = '#f39c12';
+    }
+    
+    // Listar eventos importantes (gols)
+    domElements.matchResult.highlightEvents.innerHTML = '';
+    const highlightEvents = gameData.matchEvents.filter(event => event.isGoal);
+    
+    if (highlightEvents.length === 0) {
+        const noGoalsItem = document.createElement('li');
+        noGoalsItem.textContent = 'Nenhum gol marcado na partida';
+        domElements.matchResult.highlightEvents.appendChild(noGoalsItem);
+    } else {
+        highlightEvents.forEach(event => {
+            const eventItem = document.createElement('li');
+            eventItem.textContent = `${event.minute}' - ${event.description}`;
+            domElements.matchResult.highlightEvents.appendChild(eventItem);
+        });
+    }
+    
+    // Listar melhores jogadores (simulado)
+    domElements.matchResult.topPlayers.innerHTML = '';
+    const topPlayers = [
+        { name: gameData.selectedClub.players[0].name, team: gameData.selectedClub.name, rating: 8.5 },
+        { name: gameData.currentOpponent.players[0].name, team: gameData.currentOpponent.name, rating: 8.2 },
+        { name: gameData.selectedClub.players[1].name, team: gameData.selectedClub.name, rating: 7.8 },
+        { name: gameData.currentOpponent.players[1].name, team: gameData.currentOpponent.name, rating: 7.5 },
+        { name: gameData.selectedClub.players[2].name, team: gameData.selectedClub.name, rating: 7.3 }
+    ];
+    
+    topPlayers.forEach(player => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${player.name}</td>
+            <td>${player.team}</td>
+            <td>${player.rating.toFixed(1)}</td>
+        `;
+        domElements.matchResult.topPlayers.appendChild(row);
+    });
+    
+    // Mostrar tela de resultado
+    showScreen('match-result');
+}
 
-     // Botão "Iniciar Simulação" (Dentro da tela de partida)
-     startSimulationButton.addEventListener('click', () => {
-         simulateMatch(); // Executa a lógica de simulação
-          // Os botões serão atualizados DENTRO da função simulateMatch() quando a simulação terminar
-     });
-
-     // Botão "Ver Resultado" (Aparece após a simulação)
-     viewResultButton.addEventListener('click', () => {
-         showScreen('result-screen');
-         displayResult(); // Exibe os dados armazenados no matchResult
-     });
-
-
-    // --- Inicialização ---
-    // Mostra a tela inicial ao carregar
-     showScreen('home-screen');
-
-     // Prepara a tela de seleção de clube logo no início, mas ela só será visível quando o botão start for clicado
-     // loadClubSelection(); // Poderia carregar aqui, mas é melhor carregar quando o botão start é clicado
-});
+// Iniciar o jogo quando a página carregar
+window.addEventListener('DOMContentLoaded', initGame);

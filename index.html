@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitVision AI - Seu Personal Trainer Digital</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+</head>
+<body>
+    <!-- Tela de Splash/Boas-vindas -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <div class="logo-animation">
+                <div class="logo-circle pulse"></div>
+                <div class="logo-icon"><i class="fas fa-dumbbell"></i></div>
+            </div>
+            <h1>FitVision<span>AI</span></h1>
+            <p>Seu personal trainer digital</p>
+        </div>
+    </div>
+
+    <!-- Tela de Onboarding -->
+    <div id="onboarding-screen" class="screen">
+        <div class="onboarding-container">
+            <div class="onboarding-header">
+                <div class="progress-bar">
+                    <div class="progress-step active" data-step="1"></div>
+                    <div class="progress-step" data-step="2"></div>
+                    <div class="progress-step" data-step="3"></div>
+                </div>
+            </div>
+            
+            <div class="onboarding-slides">
+                <!-- Slide 1 -->
+                <div class="onboarding-slide active" data-slide="1">
+                    <div class="slide-illustration">
+                        <div class="animated-muscle"></div>
+                    </div>
+                    <h2>Treinos Personalizados</h2>
+                    <p>Planos de exercícios adaptados ao seu corpo e objetivos</p>
+                </div>
+                
+                <!-- Slide 2 -->
+                <div class="onboarding-slide" data-slide="2">
+                    <div class="slide-illustration">
+                        <div class="animated-posture"></div>
+                    </div>
+                    <h2>Correção de Postura</h2>
+                    <p>Feedback em tempo real para evitar lesões e maximizar resultados</p>
+                </div>
+                
+                <!-- Slide 3 -->
+                <div class="onboarding-slide" data-slide="3">
+                    <div class="slide-illustration">
+                        <div class="animated-progress"></div>
+                    </div>
+                    <h2>Acompanhe Seu Progresso</h2>
+                    <p>Métricas detalhadas e evolução em gráficos interativos</p>
+                </div>
+            </div>
+            
+            <div class="onboarding-actions">
+                <button class="btn-secondary skip-btn">Pular</button>
+                <button class="btn-primary next-btn">Próximo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Cadastro -->
+    <div id="signup-screen" class="screen">
+        <div class="signup-container">
+            <div class="signup-header">
+                <h2>Vamos começar</h2>
+                <p>Preencha seus dados para personalizarmos sua experiência</p>
+            </div>
+            
+            <form id="user-data-form">
+                <div class="form-group">
+                    <label for="user-name">Nome</label>
+                    <input type="text" id="user-name" placeholder="Seu nome completo" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-age">Idade</label>
+                        <input type="number" id="user-age" min="12" max="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-gender">Gênero</label>
+                        <select id="user-gender" required>
+                            <option value="" disabled selected>Selecione</option>
+                            <option value="male">Masculino</option>
+                            <option value="female">Feminino</option>
+                            <option value="other">Outro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-height">Altura (cm)</label>
+                        <input type="number" id="user-height" min="100" max="250" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-weight">Peso (kg)</label>
+                        <input type="number" id="user-weight" step="0.1" min="30" max="300" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Objetivo principal</label>
+                    <div class="goal-options">
+                        <input type="radio" name="goal" id="goal-hypertrophy" value="hypertrophy" checked>
+                        <label for="goal-hypertrophy" class="goal-card">
+                            <i class="fas fa-muscle"></i>
+                            <span>Hipertrofia</span>
+                        </label>
+                        
+                        <input type="radio" name="goal" id="goal-weightloss" value="weightloss">
+                        <label for="goal-weightloss" class="goal-card">
+                            <i class="fas fa-weight"></i>
+                            <span>Perda de peso</span>
+                        </label>
+                        
+                        <input type="radio" name="goal" id="goal-endurance" value="endurance">
+                        <label for="goal-endurance" class="goal-card">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Resistência</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-level">Nível de experiência</label>
+                    <select id="user-level" required>
+                        <option value="" disabled selected>Selecione</option>
+                        <option value="beginner">Iniciante</option>
+                        <option value="intermediate">Intermediário</option>
+                        <option value="advanced">Avançado</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-primary submit-btn">Criar meu plano</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tela Principal do App -->
+    <div id="main-app" class="screen">
+        <!-- Barra de Navegação Superior -->
+        <div class="top-nav">
+            <div class="user-greeting">
+                <h3 id="greeting-text">Bom dia,</h3>
+                <p id="user-display-name">Carregando...</p>
+            </div>
+            <div class="user-avatar">
+                <div class="avatar-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="notification-badge">3</div>
+            </div>
+        </div>
+        
+        <!-- Conteúdo Principal -->
+        <div class="app-content">
+            <!-- Seção de Destaque -->
+            <div class="highlight-card">
+                <div class="highlight-content">
+                    <h4>Treino de Hoje</h4>
+                    <h3 id="today-workout">Superior A - Hipertrofia</h3>
+                    <div class="workout-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <span>45 min</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-fire"></i>
+                            <span>320 kcal</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>6 exercícios</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-image">
+                    <div class="muscle-animation" id="today-muscles">
+                        <!-- Animação SVG será injetada via JS -->
+                    </div>
+                </div>
+                <button class="btn-floating start-workout-btn">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+            
+            <!-- Seção de Métricas Rápidas -->
+            <div class="quick-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="bmi-value">22.5</div>
+                    <div class="metric-label">IMC</div>
+                    <div class="metric-progress good"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="fat-value">18%</div>
+                    <div class="metric-label">Gordura</div>
+                    <div class="metric-progress medium"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="muscle-value">42%</div>
+                    <div class="metric-label">Músculo</div>
+                    <div class="metric-progress good"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="water-value">60%</div>
+                    <div class="metric-label">Água</div>
+                    <div class="metric-progress excellent"></div>
+                </div>
+            </div>
+            
+            <!-- Seção de Progresso -->
+            <div class="progress-section">
+                <div class="section-header">
+                    <h3>Seu Progresso</h3>
+                    <a href="#" class="see-all">Ver tudo</a>
+                </div>
+                <div class="progress-chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="stat-value">+2.5kg</div>
+                        <div class="stat-label">Massa magra</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="stat-value">-1.8kg</div>
+                        <div class="stat-label">Gordura</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="stat-value">+15%</div>
+                        <div class="stat-label">Força</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Seção de Exercícios Recomendados -->
+            <div class="exercises-section">
+                <div class="section-header">
+                    <h3>Exercícios para você</h3>
+                    <a href="#" class="see-all">Explorar</a>
+                </div>
+                <div class="exercises-carousel">
+                    <div class="exercise-card">
+                        <div class="exercise-preview">
+                            <div class="exercise-muscles">
+                                <div class="muscle pecs active"></div>
+                                <div class="muscle delts active"></div>
+                                <div class="muscle triceps"></div>
+                            </div>
+                        </div>
+                        <div class="exercise-info">
+                            <h4>Supino Reto</h4>
+                            <div class="exercise-meta">
+                                <span><i class="fas fa-dumbbell"></i> Peito</span>
+                                <span><i class="fas fa-level-up-alt"></i> Intermediário</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="exercise-card">
+                        <div class="exercise-preview">
+                            <div class="exercise-muscles">
+                                <div class="muscle quads active"></div>
+                                <div class="muscle glutes active"></div>
+                                <div class="muscle hamstrings"></div>
+                            </div>
+                        </div>
+                        <div class="exercise-info">
+                            <h4>Agachamento Livre</h4>
+                            <div class="exercise-meta">
+                                <span><i class="fas fa-dumbbell"></i> Pernas</span>
+                                <span><i class="fas fa-level-up-alt"></i> Iniciante</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barra de Navegação Inferior -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-dumbbell"></i>
+                <span>Treinos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-camera"></i>
+                <span>Postura</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Progresso</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Tela de Treino em Andamento -->
+    <div id="workout-screen" class="screen">
+        <div class="workout-header">
+            <button class="btn-back">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h3 id="current-workout-name">Superior A - Hipertrofia</h3>
+            <div class="workout-timer">
+                <i class="fas fa-clock"></i>
+                <span id="workout-time">00:00</span>
+            </div>
+        </div>
+        
+        <div class="workout-content">
+            <!-- Visualização do Exercício -->
+            <div class="exercise-viewer">
+                <div class="exercise-3dview" id="pose-detection-container">
+                    <video id="pose-video" autoplay muted></video>
+                    <canvas id="pose-canvas"></canvas>
+                    <div class="pose-feedback">
+                        <div class="feedback-alert hidden" id="posture-alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Atenção à postura!</span>
+                        </div>
+                        <div class="feedback-good hidden" id="posture-good">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Postura correta!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="exercise-instruction">
+                    <h4 id="current-exercise-name">Supino Reto</h4>
+                    <div class="exercise-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Série: <span id="current-set">1</span>/3</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-redo"></i>
+                            <span>Reps: <span id="current-reps">0</span>/10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="exercise-description" id="exercise-description">
+                        Deite-se no banco com os pés apoiados no chão. Segure a barra com as mãos um pouco mais afastadas que a largura dos ombros. Desça a barra até o peito, mantendo os cotovelos em um ângulo de 75 graus. Empurre a barra para cima até estender os braços.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controles do Treino -->
+            <div class="workout-controls">
+                <div class="rep-counter">
+                    <button class="btn-rep minus-rep">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <div class="rep-display" id="rep-display">0</div>
+                    <button class="btn-rep plus-rep">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn-control" id="prev-exercise">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="btn-control main-action" id="play-pause-btn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="btn-control" id="next-exercise">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                </div>
+                
+                <button class="btn-secondary finish-set-btn" id="finish-set-btn">
+                    Finalizar Série
+                </button>
+            </div>
+            
+            <!-- Dicas de Postura -->
+            <div class="posture-tips">
+                <div class="tips-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>Dicas de Postura</h4>
+                </div>
+                <ul class="tips-list" id="posture-tips-list">
+                    <li>Mantenha as costas firmes no banco</li>
+                    <li>Não arquear a lombar excessivamente</li>
+                    <li>Cotovelos em 75 graus na descida</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Análise de Postura -->
+    <div id="posture-screen" class="screen">
+        <div class="posture-header">
+            <h2>Análise de Postura</h2>
+            <p>Posicione-se frente à câmera para análise em tempo real</p>
+        </div>
+        
+        <div class="posture-viewer">
+            <div class="posture-camera" id="posture-camera-container">
+                <video id="posture-video" autoplay muted></video>
+                <canvas id="posture-canvas"></canvas>
+            </div>
+            
+            <div class="posture-feedback">
+                <div class="posture-score">
+                    <div class="score-circle">
+                        <div class="circle-progress" id="posture-score-circle">
+                            <svg viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg" d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="circle-fill" stroke-dasharray="75, 100" d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <div class="score-value">75%</div>
+                        </div>
+                    </div>
+                    <h4>Pontuação de Postura</h4>
+                </div>
+                
+                <div class="posture-issues">
+                    <h4>Problemas Detectados</h4>
+                    <ul class="issues-list" id="posture-issues-list">
+                        <li>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Ombro esquerdo mais alto que o direito</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Leve inclinação para frente</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="posture-exercises">
+            <h3>Exercícios Corretivos</h3>
+            <div class="corrective-exercises">
+                <div class="corrective-exercise">
+                    <div class="exercise-icon">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                    <div class="exercise-info">
+                        <h4>Alongamento de Trapézio</h4>
+                        <p>3 séries de 30 segundos cada lado</p>
+                    </div>
+                </div>
+                <div class="corrective-exercise">
+                    <div class="exercise-icon">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                    <div class="exercise-info">
+                        <h4>Rotadores do Ombro</h4>
+                        <p>2 séries de 12 repetições</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Perfil e Estatísticas -->
+    <div id="profile-screen" class="screen">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <div class="avatar-large">
+                    <i class="fas fa-user"></i>
+                </div>
+                <button class="btn-edit">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+            </div>
+            <div class="profile-info">
+                <h2 id="profile-name">Carregando...</h2>
+                <p id="profile-goal">Objetivo: Hipertrofia</p>
+            </div>
+        </div>
+        
+        <div class="profile-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Dias Ativos</h4>
+                    <p id="active-days">24/30</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Calorias</h4>
+                    <p id="total-calories">8,540 kcal</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Treinos</h4>
+                    <p id="total-workouts">18</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Conquistas</h4>
+                    <p id="total-achievements">5</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-body-stats">
+            <h3>Seu Corpo</h3>
+            <div class="body-stats-grid">
+                <div class="body-stat">
+                    <div class="stat-value" id="profile-weight">78.5kg</div>
+                    <div class="stat-label">Peso</div>
+                    <div class="stat-change positive">-2.3kg</div>
+                </div>
+                <div class="body-stat">
+                    <div class="stat-value" id="profile-fat">18%</div>
+                    <div class="stat-label">Gordura</div>
+                    <div class="stat-change positive">-3.1%</div>
+                </div>
+                <div class="body-stat">
+                    <div class="stat-value" id="profile-muscle">42%</div>
+                    <div class="stat-label">Músculo</div>
+                    <div class="stat-change positive">+1.8%</div>
+                </div>
+                <div class="body-stat">
+                    <div class="stat-value" id="profile-water">60%</div>
+                    <div class="stat-label">Água</div>
+                    <div class="stat-change neutral">+0.5%</div>
+                </div>
+            </div>
+            
+            <div class="body-chart-container">
+                <canvas id="body-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="profile-goals">
+            <h3>Seus Objetivos</h3>
+            <div class="goal-progress">
+                <div class="goal-info">
+                    <h4>Massa Muscular</h4>
+                    <p>+5kg em 12 semanas</p>
+                </div>
+                <div class="goal-bar">
+                    <div class="progress-fill" style="width: 40%;"></div>
+                    <span>40%</span>
+                </div>
+            </div>
+            <div class="goal-progress">
+                <div class="goal-info">
+                    <h4>Redução de Gordura</h4>
+                    <p>-5% em 12 semanas</p>
+                </div>
+                <div class="goal-bar">
+                    <div class="progress-fill" style="width: 60%;"></div>
+                    <span>60%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurações</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>Conta</h4>
+                    <ul class="settings-list">
+                        <li>
+                            <i class="fas fa-user"></i>
+                            <span>Editar Perfil</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </li>
+                        <li>
+                            <i class="fas fa-bell"></i>
+                            <span>Notificações</span>
+                            <div class="toggle-switch active">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-moon"></i>
+                            <span>Modo Escuro</span>
+                            <div class="toggle-switch">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Treino</h4>
+                    <ul class="settings-list">
+                        <li>
+                            <i class="fas fa-dumbbell"></i>
+                            <span>Unidades de Medida</span>
+                            <div class="unit-switch">
+                                <span class="active">kg</span>
+                                <span>lbs</span>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-video"></i>
+                            <span>Análise de Postura</span>
+                            <div class="toggle-switch active">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-robot"></i>
+                            <span>Dicas de IA</span>
+                            <div class="toggle-switch active">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Integrações</h4>
+                    <ul class="settings-list">
+                        <li>
+                            <i class="fab fa-apple"></i>
+                            <span>HealthKit</span>
+                            <div class="toggle-switch">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fab fa-google"></i>
+                            <span>Google Fit</span>
+                            <div class="toggle-switch active">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-watch"></i>
+                            <span>Wearables</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sair da Conta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Realidade Aumentada -->
+    <div id="ar-modal" class="modal">
+        <div class="modal-content ar-content">
+            <div class="ar-header">
+                <h3>Realidade Aumentada</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="ar-body">
+                <div class="ar-viewport" id="ar-viewport">
+                    <div class="ar-marker"></div>
+                    <div class="ar-model" id="ar-model">
+                        <!-- Modelo 3D será injetado aqui -->
+                    </div>
+                </div>
+                <div class="ar-controls">
+                    <button class="btn-ar rotate">
+                        <i class="fas fa-undo"></i>
+                        Girar
+                    </button>
+                    <button class="btn-ar zoom-in">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="btn-ar zoom-out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="btn-ar layers">
+                        <i class="fas fa-layer-group"></i>
+                        Músculos
+                    </button>
+                </div>
+                <div class="ar-info">
+                    <h4 id="ar-exercise-name">Supino Reto</h4>
+                    <p id="ar-exercise-muscles">Peitoral, Tríceps, Deltóide</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script src="pose-detection.js"></script>
+    <script src="charts.js"></script>
+</body>
+</html>

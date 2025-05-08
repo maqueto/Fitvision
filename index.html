@@ -1,93 +1,253 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Manager Prototype</title>
+    <title>Football Manager Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <header>
-        <h1>Meu Jogo de Futebol</h1>
-    </header>
-
-    <main id="game-container">
-        <section id="home-screen" class="game-screen active">
-            <h2>Bem-vindo ao Jogo!</h2>
-            <p>Gerencie seu clube, escolha seu elenco e simule partidas.</p>
-            <button id="start-game-btn">Começar Jogo</button>
-        </section>
-
-        <section id="club-selection-screen" class="game-screen">
-            <h2>Escolha Seu Clube</h2>
-            <div id="club-list-container">
-                <p>Carregando clubes...</p>
+    <div class="game-container">
+        <!-- Tela de Menu Principal -->
+        <div id="main-menu" class="screen active">
+            <h1>Football Manager Pro</h1>
+            <div class="menu-options">
+                <button id="start-game" class="btn btn-primary">Iniciar Jogo</button>
+                <button id="how-to-play" class="btn btn-secondary">Como Jogar</button>
+                <button id="credits" class="btn btn-secondary">Créditos</button>
             </div>
-            <div id="selected-club-info">
+        </div>
+
+        <!-- Tela de Seleção de Clube -->
+        <div id="club-selection" class="screen">
+            <h2>Selecione seu Clube</h2>
+            <div class="club-list" id="club-list-container">
+                <!-- Clubes serão carregados dinamicamente aqui -->
+            </div>
+            <div class="club-info-preview" id="selected-club-preview">
+                <p>Nenhum clube selecionado</p>
+            </div>
+            <div class="action-buttons">
+                <button id="confirm-club" class="btn btn-primary" disabled>Confirmar Clube</button>
+                <button id="back-to-menu-from-club" class="btn btn-secondary">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Tela de Visualização do Elenco -->
+        <div id="squad-view" class="screen">
+            <div class="squad-header">
+                <h2 id="current-club-name">Nome do Clube</h2>
+                <div class="club-stats">
+                    <span>Poder: <span id="club-power">0</span></span>
+                    <span>Orçamento: <span id="club-budget">€0M</span></span>
                 </div>
-            <button id="select-club-btn" disabled>Confirmar Clube</button>
-            <button class="back-button" data-target-screen="home-screen">Voltar</button>
-        </section>
-
-        <section id="squad-screen" class="game-screen">
-            <h2>Meu Elenco</h2>
-            <h3 id="current-club-name">Nome do Clube</h3>
-            <div id="squad-list-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Posição</th>
-                            <th>Overall</th>
+            </div>
+            
+            <div class="squad-container">
+                <div class="player-list-container">
+                    <h3>Elenco</h3>
+                    <table id="player-list">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Posição</th>
+                                <th>Overall</th>
+                                <th>Idade</th>
                             </tr>
-                    </thead>
-                    <tbody id="player-list-body">
-                        <tr>
-                            <td colspan="3">Carregando elenco...</td>
-                        </tr>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <!-- Jogadores serão carregados dinamicamente aqui -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="tactics-preview">
+                    <h3>Tática</h3>
+                    <div class="formation-pitch">
+                        <!-- Campo de futebol com posicionamento tático -->
+                        <div class="pitch">
+                            <div class="formation-line gk-line">
+                                <div class="player-circle">GK</div>
+                            </div>
+                            <div class="formation-line def-line">
+                                <div class="player-circle">LD</div>
+                                <div class="player-circle">ZAG</div>
+                                <div class="player-circle">ZAG</div>
+                                <div class="player-circle">LE</div>
+                            </div>
+                            <div class="formation-line mid-line">
+                                <div class="player-circle">VOL</div>
+                                <div class="player-circle">MC</div>
+                                <div class="player-circle">MC</div>
+                            </div>
+                            <div class="formation-line att-line">
+                                <div class="player-circle">PD</div>
+                                <div class="player-circle">SA</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="formation-info">
+                        <p>Formação: <span id="formation-type">4-3-1-2</span></p>
+                    </div>
+                </div>
             </div>
-            <button id="simulate-match-btn">Simular Próxima Partida</button>
-            <button class="back-button" data-target-screen="home-screen">Menu Principal</button>
-        </section>
+            
+            <div class="squad-actions">
+                <button id="simulate-match" class="btn btn-primary">Simular Partida</button>
+                <button id="back-to-club-selection" class="btn btn-secondary">Trocar Clube</button>
+                <button id="training" class="btn btn-tertiary">Treinamento</button>
+            </div>
+        </div>
 
-        <section id="match-screen" class="game-screen">
-            <h2>Simulando Partida</h2>
-            <div class="match-info">
-                <span id="home-team-display">Time Casa</span> <span id="score-display">0 - 0</span> <span id="away-team-display">Time Fora</span>
+        <!-- Tela de Simulação de Partida -->
+        <div id="match-simulation" class="screen">
+            <div class="match-header">
+                <h2>Simulação em Andamento</h2>
+                <div class="match-teams">
+                    <div class="team home-team">
+                        <div class="team-logo" id="home-team-logo"></div>
+                        <span id="home-team-name">Seu Time</span>
+                    </div>
+                    <div class="match-score">
+                        <span id="home-score">0</span>
+                        <span> - </span>
+                        <span id="away-score">0</span>
+                    </div>
+                    <div class="team away-team">
+                        <span id="away-team-name">Adversário</span>
+                        <div class="team-logo" id="away-team-logo"></div>
+                    </div>
+                </div>
+                <div class="match-time">
+                    <div class="time-bar">
+                        <div class="time-progress" id="time-progress"></div>
+                    </div>
+                    <span id="current-minute">0'</span>
+                </div>
             </div>
-            <div id="match-log">
-                <p>Partida prestes a começar...</p>
+            
+            <div class="match-container">
+                <div class="match-events" id="match-events-log">
+                    <h3>Eventos da Partida</h3>
+                    <div class="events-list" id="events-list">
+                        <!-- Eventos serão adicionados dinamicamente aqui -->
+                    </div>
+                </div>
+                
+                <div class="match-stats">
+                    <h3>Estatísticas</h3>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span>Finalizações</span>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar home-stat" id="shots-stat-home" style="width: 0%"></div>
+                                <div class="stat-bar away-stat" id="shots-stat-away" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span>Posse de Bola</span>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar home-stat" id="possession-stat-home" style="width: 50%"></div>
+                                <div class="stat-bar away-stat" id="possession-stat-away" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span>Faltas</span>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar home-stat" id="fouls-stat-home" style="width: 0%"></div>
+                                <div class="stat-bar away-stat" id="fouls-stat-away" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button id="start-simulation-btn">Iniciar Simulação</button>
-            <button id="view-result-btn" class="hidden">Ver Resultado</button>
-        </section>
+            
+            <div class="match-controls">
+                <button id="pause-match" class="btn btn-secondary">Pausar</button>
+                <button id="speed-up-match" class="btn btn-tertiary">Acelerar</button>
+            </div>
+        </div>
 
-        <section id="result-screen" class="game-screen">
-            <h2>Resultado da Partida</h2>
-            <div id="final-score">
-                <p>Placar: -</p>
+        <!-- Tela de Resultado da Partida -->
+        <div id="match-result" class="screen">
+            <div class="result-header">
+                <h2>Resultado Final</h2>
+                <div class="result-teams">
+                    <div class="team home-team">
+                        <div class="team-logo" id="result-home-logo"></div>
+                        <span id="result-home-name">Seu Time</span>
+                    </div>
+                    <div class="result-score">
+                        <span id="result-home-score">0</span>
+                        <span> - </span>
+                        <span id="result-away-score">0</span>
+                    </div>
+                    <div class="team away-team">
+                        <span id="result-away-name">Adversário</span>
+                        <div class="team-logo" id="result-away-logo"></div>
+                    </div>
+                </div>
+                <div class="result-message" id="result-message">
+                    <!-- Mensagem de vitória/derrota/empate será exibida aqui -->
+                </div>
             </div>
-            <div id="match-summary">
-                <p id="result-message"></p>
+            
+            <div class="result-container">
+                <div class="match-highlights">
+                    <h3>Principais Eventos</h3>
+                    <ul id="highlight-events">
+                        <!-- Eventos importantes serão listados aqui -->
+                    </ul>
+                </div>
+                
+                <div class="player-ratings">
+                    <h3>Melhores Jogadores</h3>
+                    <table id="top-players">
+                        <thead>
+                            <tr>
+                                <th>Jogador</th>
+                                <th>Time</th>
+                                <th>Nota</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Melhores jogadores serão listados aqui -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-             <div id="match-events-summary">
-                <h3>Eventos:</h3>
-                <ul id="result-events-list">
-                    <li>Nenhum evento registrado.</li>
-                </ul>
+            
+            <div class="result-actions">
+                <button id="back-to-squad" class="btn btn-primary">Voltar ao Elenco</button>
+                <button id="new-match" class="btn btn-secondary">Nova Partida</button>
             </div>
-            <button class="back-button" data-target-screen="squad-screen">Voltar para o Elenco</button>
-             <button class="back-button" data-target-screen="home-screen">Voltar para o Menu</button>
-        </section>
+        </div>
 
-    </main>
+        <!-- Tela de Como Jogar -->
+        <div id="how-to-play-screen" class="screen">
+            <h2>Como Jogar</h2>
+            <div class="instructions">
+                <p>1. Selecione um clube para gerenciar</p>
+                <p>2. Analise seu elenco e ajuste a formação se necessário</p>
+                <p>3. Simule partidas contra times adversários</p>
+                <p>4. Acompanhe as estatísticas e o desempenho dos jogadores</p>
+                <p>5. Tente vencer o maior número de partidas possível!</p>
+            </div>
+            <button id="back-to-menu-from-help" class="btn btn-primary">Voltar ao Menu</button>
+        </div>
 
-    <footer>
-        <p>&copy; 2023 Meu Jogo Prototype</p>
-    </footer>
+        <!-- Tela de Créditos -->
+        <div id="credits-screen" class="screen">
+            <h2>Créditos</h2>
+            <div class="credits-content">
+                <p>Football Manager Pro</p>
+                <p>Desenvolvido por: [Seu Nome]</p>
+                <p>Versão 1.0</p>
+                <p>Todos os direitos reservados © 2023</p>
+            </div>
+            <button id="back-to-menu-from-credits" class="btn btn-primary">Voltar ao Menu</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

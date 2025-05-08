@@ -1,215 +1,144 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Telas
-    const clubSelectionScreen = document.getElementById('club-selection-screen');
-    const dashboardScreen = document.getElementById('dashboard-screen');
-    const squadScreen = document.getElementById('squad-screen');
-    const matchResultScreen = document.getElementById('match-result-screen');
+/* style.css */
 
-    // Elementos de Exibição
-    const clubListDiv = document.getElementById('club-list');
-    const clubNameDisplay = document.getElementById('club-name-display');
-    const clubReputationDisplay = document.getElementById('club-reputation');
-    const clubBudgetDisplay = document.getElementById('club-budget');
-    const nextOpponentDisplay = document.getElementById('next-opponent');
-    const playerListDiv = document.getElementById('player-list');
-    const matchResultText = document.getElementById('match-result-text');
-    const matchScorersText = document.getElementById('match-scorers');
-    const matchStatsText = document.getElementById('match-stats');
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh; /* Garante que o body ocupa a altura mínima da viewport */
+}
 
+header {
+    background: #333;
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+    width: 100%; /* Ocupa toda a largura */
+}
 
-    // Botões
-    const btnViewSquad = document.getElementById('btn-view-squad');
-    const btnPlayMatch = document.getElementById('btn-play-match');
-    const btnBackToDashboardFromSquad = document.getElementById('btn-back-to-dashboard-from-squad');
-    const btnBackToDashboardFromMatch = document.getElementById('btn-back-to-dashboard-from-match');
-    const btnBackToClubSelection = document.getElementById('btn-back-to-club-selection');
+main {
+    flex-grow: 1; /* Permite que o main ocupe o espaço restante */
+    padding: 20px;
+    width: 100%;
+    max-width: 800px; /* Largura máxima para telas maiores */
+    box-sizing: border-box; /* Inclui padding e border no cálculo da largura */
+}
 
-    // Estado do Jogo (Simplificado)
-    let gameState = {
-        chosenClub: null,
-        clubs: [
-            {
-                id: 1,
-                name: "Tupi FC (Série D)",
-                reputation: "Local",
-                budget: 50000,
-                overallStrength: 50, // De 0 a 100
-                players: [
-                    { id: 101, name: "Jonas Silva", position: "Atacante", skill: 55, age: 28 },
-                    { id: 102, name: "Carlos Alberto", position: "Meio-Campo", skill: 52, age: 30 },
-                    { id: 103, name: "Ricardo Lima", position: "Defensor", skill: 50, age: 29 },
-                    { id: 104, name: "Fernando Alves", position: "Goleiro", skill: 53, age: 31 },
-                ]
-            },
-            {
-                id: 2,
-                name: "Nacional AC (Série C)",
-                reputation: "Regional",
-                budget: 150000,
-                overallStrength: 65,
-                players: [
-                    { id: 201, name: "Roberto Souza", position: "Atacante", skill: 68, age: 25 },
-                    { id: 202, name: "Paulo Pereira", position: "Meio-Campo", skill: 66, age: 27 },
-                    { id: 203, name: "André Costa", position: "Defensor", skill: 64, age: 26 },
-                    { id: 204, name: "Bruno Mendes", position: "Goleiro", skill: 65, age: 28 },
-                ]
-            },
-             {
-                id: 3,
-                name: "Porto Real (Série B)",
-                reputation: "Nacional",
-                budget: 500000,
-                overallStrength: 75,
-                players: [
-                    { id: 301, name: "Diego Martins", position: "Atacante", skill: 78, age: 24 },
-                    { id: 302, name: "Lucas Ferreira", position: "Meio-Campo", skill: 76, age: 29 },
-                    { id: 303, name: "Felipe Barros", position: "Defensor", skill: 74, age: 28 },
-                    { id: 304, name: "Gabriel Rocha", position: "Goleiro", skill: 75, age: 30 },
-                ]
-            }
-        ],
-        opponents: [ // Adversários genéricos para simplificar
-            { name: "União EC", overallStrength: 55 },
-            { name: "Atlético Serrano", overallStrength: 60 },
-            { name: "Central SC", overallStrength: 70 },
-            { name: "Sporting Caipira", overallStrength: 45 }
-        ],
-        currentOpponent: null
-    };
+.game-screen {
+    display: none; /* Todas as telas ficam escondidas por padrão */
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
 
-    // Funções de Navegação
-    function showScreen(screenToShow) {
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.classList.remove('active');
-        });
-        screenToShow.classList.add('active');
-    }
+.game-screen.active {
+    display: block; /* A tela com a classe 'active' é exibida */
+}
 
-    // Funções de Renderização
-    function renderClubSelection() {
-        clubListDiv.innerHTML = ''; // Limpa lista anterior
-        gameState.clubs.forEach(club => {
-            const clubDiv = document.createElement('div');
-            clubDiv.classList.add('club-item');
-            clubDiv.innerHTML = `<h3>${club.name}</h3>
-                                 <p>Rep.: ${club.reputation} | Orç.: R$ ${club.budget.toLocaleString()}</p>`;
-            clubDiv.addEventListener('click', () => selectClub(club.id));
-            clubListDiv.appendChild(clubDiv);
-        });
-        showScreen(clubSelectionScreen);
-    }
+h2, h3 {
+    color: #0056b3;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
 
-    function renderDashboard() {
-        if (!gameState.chosenClub) return;
-        clubNameDisplay.textContent = gameState.chosenClub.name;
-        clubReputationDisplay.textContent = gameState.chosenClub.reputation;
-        clubBudgetDisplay.textContent = gameState.chosenClub.budget.toLocaleString();
+button {
+    display: inline-block;
+    background: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-right: 10px; /* Espaço entre botões */
+    margin-top: 10px; /* Espaço acima dos botões */
+}
 
-        // Seleciona um novo adversário aleatório se não houver um ou para variar
-        const randomOpponentIndex = Math.floor(Math.random() * gameState.opponents.length);
-        gameState.currentOpponent = gameState.opponents[randomOpponentIndex];
-        nextOpponentDisplay.textContent = `${gameState.currentOpponent.name} (Força: ${gameState.currentOpponent.overallStrength})`;
+button:hover:not(:disabled) {
+    background: #0056b3;
+}
 
-        showScreen(dashboardScreen);
-    }
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
 
-    function renderSquad() {
-        if (!gameState.chosenClub) return;
-        playerListDiv.innerHTML = ''; // Limpa
-        const table = document.createElement('table');
-        table.innerHTML = `<thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Posição</th>
-                                    <th>Habilidade</th>
-                                    <th>Idade</th>
-                                </tr>
-                           </thead>
-                           <tbody></tbody>`;
-        const tbody = table.querySelector('tbody');
-        gameState.chosenClub.players.forEach(player => {
-            const row = tbody.insertRow();
-            row.innerHTML = `<td>${player.name}</td>
-                             <td>${player.position}</td>
-                             <td>${player.skill}</td>
-                             <td>${player.age}</td>`;
-        });
-        playerListDiv.appendChild(table);
-        showScreen(squadScreen);
-    }
+.back-button {
+    background: #6c757d;
+}
 
-    function renderMatchResult(homeScore, awayScore, opponentName, scorers, stats) {
-        let resultMessage = `Você empatou ${homeScore} x ${awayScore} contra ${opponentName}.`;
-        if (homeScore > awayScore) {
-            resultMessage = `VOCÊ VENCEU! ${homeScore} x ${awayScore} contra ${opponentName}.`;
-            gameState.chosenClub.budget += 10000; // Bônus por vitória
-        } else if (awayScore > homeScore) {
-            resultMessage = `Você perdeu por ${homeScore} x ${awayScore} para ${opponentName}.`;
-            gameState.chosenClub.budget -= 2000; // Custo pequeno por derrota
-             if (gameState.chosenClub.budget < 0) gameState.chosenClub.budget = 0;
-        }
-
-        matchResultText.textContent = resultMessage;
-        matchScorersText.textContent = `Gols: ${scorers}`;
-        matchStatsText.textContent = `Estatísticas: ${stats}`;
-        showScreen(matchResultScreen);
-    }
-
-    // Lógica do Jogo
-    function selectClub(clubId) {
-        gameState.chosenClub = gameState.clubs.find(club => club.id === clubId);
-        if (gameState.chosenClub) {
-            renderDashboard();
-        }
-    }
-
-    function simulateMatch() {
-        if (!gameState.chosenClub || !gameState.currentOpponent) return;
-
-        const myTeamStrength = gameState.chosenClub.overallStrength;
-        const opponentStrength = gameState.currentOpponent.overallStrength;
-
-        // Simulação MUITO simples
-        let myScore = 0;
-        let opponentScore = 0;
-
-        // Cada time tem "chances de gol" baseadas na sua força
-        for (let i = 0; i < 5; i++) { // Simula 5 "momentos" no jogo
-            if (Math.random() * 100 < myTeamStrength / 2) myScore++;
-            if (Math.random() * 100 < opponentStrength / 2) opponentScore++;
-        }
-        // Adiciona um pouco mais de aleatoriedade/emoção
-        if (myTeamStrength > opponentStrength + 15 && Math.random() < 0.3) myScore +=1;
-        if (opponentStrength > myTeamStrength + 15 && Math.random() < 0.3) opponentScore +=1;
-        if (Math.abs(myTeamStrength - opponentStrength) < 10 && Math.random() < 0.1) { // Chance de zebra
-            if(Math.random() < 0.5) myScore +=1; else opponentScore +=1;
-        }
+.back-button:hover:not(:disabled) {
+     background: #545b62;
+}
 
 
-        // Simplificação de marcadores e estatísticas
-        let scorers = "Nenhum gol marcado.";
-        if (myScore > 0 || opponentScore > 0) {
-            scorers = "";
-            for(let i=0; i < myScore; i++) scorers += `${gameState.chosenClub.players[Math.floor(Math.random() * gameState.chosenClub.players.length)].name} (Seu Time); `;
-            for(let i=0; i < opponentScore; i++) scorers += `Jogador Adversário; `;
-        }
-        const stats = `Posse: ${Math.floor(Math.random() * 40) + 30}% (Seu Time) vs ${100 - (Math.floor(Math.random() * 40) + 30)}% (Adv) | Chutes: ${myScore + Math.floor(Math.random()*5)} vs ${opponentScore + Math.floor(Math.random()*5)}`;
+#club-list-container button {
+    display: block; /* Cada botão de clube em uma nova linha */
+    width: 100%; /* Ocupa a largura total */
+    text-align: left; /* Texto alinhado à esquerda */
+    margin-bottom: 5px;
+}
+
+#squad-list-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#squad-list-container th,
+#squad-list-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#squad-list-container th {
+    background-color: #f2f2f2;
+}
+
+.match-info {
+    text-align: center;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+#match-log, #match-events-summary ul {
+    background-color: #e9e9e9;
+    padding: 15px;
+    border-radius: 5px;
+    max-height: 200px; /* Limita a altura do log */
+    overflow-y: auto; /* Adiciona scroll se o conteúdo exceder */
+    margin-top: 10px;
+}
+
+#match-log p, #match-events-summary li {
+    margin: 5px 0;
+    padding: 5px;
+    border-bottom: 1px dashed #ccc;
+}
+
+#match-log p:last-child, #match-events-summary li:last-child {
+    border-bottom: none;
+}
 
 
-        renderMatchResult(myScore, opponentScore, gameState.currentOpponent.name, scorers, stats);
-    }
+.hidden {
+    display: none;
+}
 
-
-    // Event Listeners
-    btnViewSquad.addEventListener('click', renderSquad);
-    btnPlayMatch.addEventListener('click', simulateMatch);
-    btnBackToDashboardFromSquad.addEventListener('click', renderDashboard);
-    btnBackToDashboardFromMatch.addEventListener('click', renderDashboard);
-    btnBackToClubSelection.addEventListener('click', () => {
-        gameState.chosenClub = null; // Limpa o clube escolhido
-        renderClubSelection();
-    });
-
-    // Iniciar o Jogo
-    renderClubSelection();
-});
+footer {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    width: 100%;
+}
